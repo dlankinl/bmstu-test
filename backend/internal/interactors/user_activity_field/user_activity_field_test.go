@@ -24,13 +24,14 @@ func TestInteractor_CalculateUserRating(t *testing.T) {
 	finRepo := mocks.NewMockIFinancialReportRepository(ctrl)
 	compRepo := mocks.NewMockICompanyRepository(ctrl)
 	actFieldRepo := mocks.NewMockIActivityFieldRepository(ctrl)
+	logger := mocks.NewMockILogger(ctrl)
 
-	userSvc := user.NewService(userRepo, compRepo, actFieldRepo)
-	actFieldSvc := activity_field.NewService(actFieldRepo, compRepo)
-	compSvc := company.NewService(compRepo)
-	finSvc := fin_report.NewService(finRepo)
+	userSvc := user.NewService(userRepo, compRepo, actFieldRepo, logger)
+	actFieldSvc := activity_field.NewService(actFieldRepo, compRepo, logger)
+	compSvc := company.NewService(compRepo, actFieldRepo, logger)
+	finSvc := fin_report.NewService(finRepo, logger)
 
-	interactor := NewInteractor(userSvc, actFieldSvc, compSvc, finSvc)
+	interactor := NewInteractor(userSvc, actFieldSvc, compSvc, finSvc, logger)
 
 	testCases := []struct {
 		name       string
@@ -65,7 +66,7 @@ func TestInteractor_CalculateUserRating(t *testing.T) {
 								Name:    "b",
 								City:    "b",
 							},
-						}, nil).AnyTimes()
+						}, 0, nil).AnyTimes()
 
 				compRepo.EXPECT().
 					GetById(
@@ -233,13 +234,14 @@ func TestInteractor_GetMostProfitableCompany(t *testing.T) {
 	finRepo := mocks.NewMockIFinancialReportRepository(ctrl)
 	compRepo := mocks.NewMockICompanyRepository(ctrl)
 	actFieldRepo := mocks.NewMockIActivityFieldRepository(ctrl)
+	logger := mocks.NewMockILogger(ctrl)
 
-	userSvc := user.NewService(userRepo, compRepo, actFieldRepo)
-	actFieldSvc := activity_field.NewService(actFieldRepo, compRepo)
-	compSvc := company.NewService(compRepo)
-	finSvc := fin_report.NewService(finRepo)
+	userSvc := user.NewService(userRepo, compRepo, actFieldRepo, logger)
+	actFieldSvc := activity_field.NewService(actFieldRepo, compRepo, logger)
+	compSvc := company.NewService(compRepo, actFieldRepo, logger)
+	finSvc := fin_report.NewService(finRepo, logger)
 
-	interactor := NewInteractor(userSvc, actFieldSvc, compSvc, finSvc)
+	interactor := NewInteractor(userSvc, actFieldSvc, compSvc, finSvc, logger)
 
 	testCases := []struct {
 		name       string
@@ -396,13 +398,14 @@ func TestInteractor_GetUserFinancialReport(t *testing.T) {
 	finRepo := mocks.NewMockIFinancialReportRepository(ctrl)
 	compRepo := mocks.NewMockICompanyRepository(ctrl)
 	actFieldRepo := mocks.NewMockIActivityFieldRepository(ctrl)
+	logger := mocks.NewMockILogger(ctrl)
 
-	userSvc := user.NewService(userRepo, compRepo, actFieldRepo)
-	actFieldSvc := activity_field.NewService(actFieldRepo, compRepo)
-	compSvc := company.NewService(compRepo)
-	finSvc := fin_report.NewService(finRepo)
+	userSvc := user.NewService(userRepo, compRepo, actFieldRepo, logger)
+	actFieldSvc := activity_field.NewService(actFieldRepo, compRepo, logger)
+	compSvc := company.NewService(compRepo, actFieldRepo, logger)
+	finSvc := fin_report.NewService(finRepo, logger)
 
-	interactor := NewInteractor(userSvc, actFieldSvc, compSvc, finSvc)
+	interactor := NewInteractor(userSvc, actFieldSvc, compSvc, finSvc, logger)
 
 	testCases := []struct {
 		name       string
@@ -438,7 +441,7 @@ func TestInteractor_GetUserFinancialReport(t *testing.T) {
 								Name:    "b",
 								City:    "b",
 							},
-						}, nil)
+						}, 0, nil)
 
 				finRepo.EXPECT().
 					GetByCompany(
