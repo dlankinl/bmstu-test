@@ -1,0 +1,10 @@
+/.idea
+.DS_Store
+/postgres-db
+*.bkp
+*.dtmp
+*.drawio
+Thumbs.db
+*/logs
+/utils
+*.png
