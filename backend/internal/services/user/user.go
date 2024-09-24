@@ -3,11 +3,9 @@ package user
 import (
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"ppo/domain"
 	"ppo/pkg/logger"
-	"strings"
-
-	"github.com/google/uuid"
 )
 
 type Service struct {
@@ -29,43 +27,6 @@ func NewService(
 		actFieldRepo: actFieldRepo,
 		logger:       logger,
 	}
-}
-
-func (s *Service) Create(ctx context.Context, user *domain.User) (err error) {
-	prompt := "UserCreate"
-
-	if user.Gender != "m" && user.Gender != "w" {
-		s.logger.Infof("%s: неизвестный пол", prompt)
-		return fmt.Errorf("неизвестный пол")
-	}
-
-	if user.City == "" {
-		s.logger.Infof("%s: должно быть указано название города", prompt)
-		return fmt.Errorf("должно быть указано название города")
-	}
-
-	if user.Birthday.IsZero() {
-		s.logger.Infof("%s: должна быть указана дата рождения", prompt)
-		return fmt.Errorf("должна быть указана дата рождения")
-	}
-
-	if user.FullName == "" {
-		s.logger.Infof("%s: должны быть указаны ФИО", prompt)
-		return fmt.Errorf("должны быть указаны ФИО")
-	}
-
-	if len(strings.Split(user.FullName, " ")) != 3 {
-		s.logger.Infof("%s: некорректное количество слов (должны быть фамилия, имя и отчество)", prompt)
-		return fmt.Errorf("некорректное количество слов (должны быть фамилия, имя и отчество)")
-	}
-
-	err = s.userRepo.Create(ctx, user)
-	if err != nil {
-		s.logger.Infof("%s: создание пользователя: %v", prompt, err)
-		return fmt.Errorf("создание пользователя: %w", err)
-	}
-
-	return nil
 }
 
 func (s *Service) GetByUsername(ctx context.Context, username string) (user *domain.User, err error) {
@@ -111,26 +72,6 @@ func (s *Service) Update(ctx context.Context, user *domain.User) (err error) {
 		s.logger.Infof("%s: неизвестный пол", prompt)
 		return fmt.Errorf("неизвестный пол")
 	}
-
-	//if user.City == "" {
-	//	s.logger.Infof("%s: должно быть указано название города", prompt)
-	//	return fmt.Errorf("должно быть указано название города")
-	//}
-
-	//if !user.Birthday.IsZero() {
-	//	s.logger.Infof("%s: должна быть указана дата рождения", prompt)
-	//	return fmt.Errorf("должна быть указана дата рождения")
-	//}
-	//
-	//if user.FullName != "" {
-	//	s.logger.Infof("%s: должны быть указаны ФИО", prompt)
-	//	return fmt.Errorf("должны быть указаны ФИО")
-	//}
-
-	//if len(strings.Split(user.FullName, " ")) != 3 {
-	//	s.logger.Infof("%s: некорректное количество слов (должны быть фамилия, имя и отчество)", prompt)
-	//	return fmt.Errorf("некорректное количество слов (должны быть фамилия, имя и отчество)")
-	//}
 
 	if user.Role != "" && user.Role != "admin" && user.Role != "user" {
 		s.logger.Infof("%s: невалидная роль", prompt)

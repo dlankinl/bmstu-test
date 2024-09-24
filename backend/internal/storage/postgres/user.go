@@ -20,31 +20,6 @@ func NewUserRepository(db *pgxpool.Pool) domain.IUserRepository {
 	}
 }
 
-func (r *UserRepository) Create(ctx context.Context, user *domain.User) (err error) {
-	query := `update ppo.users
-		set 
-		    full_name = $1,
-		    birthday = $2,
-		    gender = $3,
-		    city = $4
-		where id = $5`
-
-	_, err = r.db.Exec(
-		ctx,
-		query,
-		user.FullName,
-		user.Birthday,
-		user.Gender,
-		user.City,
-		user.ID,
-	)
-	if err != nil {
-		return fmt.Errorf("создание пользователя: %w", err)
-	}
-
-	return nil
-}
-
 func (r *UserRepository) GetByUsername(ctx context.Context, username string) (user *domain.User, err error) {
 	query := `select id, username, full_name, birthday, gender, city, role from ppo.users where username = $1`
 
