@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"ppo/domain"
 	"ppo/internal/config"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -21,23 +22,25 @@ func NewCompanyRepository(db *pgxpool.Pool) domain.ICompanyRepository {
 	}
 }
 
-func (r *CompanyRepository) Create(ctx context.Context, company *domain.Company) (err error) {
+func (r *CompanyRepository) Create(ctx context.Context, company *domain.Company) (comp *domain.Company, err error) {
 	query := `insert into ppo.companies(owner_id, activity_field_id, name, city) 
-	values ($1, $2, $3, $4)`
+	values ($1, $2, $3, $4) returning id`
 
-	_, err = r.db.Exec(
+	var id uuid.UUID
+	err = r.db.QueryRow(
 		ctx,
 		query,
 		company.OwnerID,
 		company.ActivityFieldId,
 		company.Name,
 		company.City,
-	)
+	).Scan(&id)
 	if err != nil {
-		return fmt.Errorf("создание компании: %w", err)
+		return nil, fmt.Errorf("создание компании: %w", err)
 	}
+	company.ID = id
 
-	return nil
+	return company, nil
 }
 
 func (r *CompanyRepository) GetById(ctx context.Context, id uuid.UUID) (company *domain.Company, err error) {
@@ -130,23 +133,47 @@ func (r *CompanyRepository) GetByOwnerId(ctx context.Context, id uuid.UUID, page
 }
 
 func (r *CompanyRepository) Update(ctx context.Context, company *domain.Company) (err error) {
-	query := `
-			update ppo.companies
-			set 
-			    owner_id = $1,
-			    activity_field_id = $2,
-			    name = $3, 
-			    city = $4
-			where id = $5`
+	//query := `
+	//		update ppo.companies
+	//		set
+	//		    owner_id = $1,
+	//		    activity_field_id = $2,
+	//		    name = $3,
+	//		    city = $4
+	//		where id = $5`
+	query := "update ppo.companies set "
+
+	args := make([]any, 0)
+	i := 1
+	equals := make([]string, 0)
+	if company.OwnerID.ID() != 0 {
+		equals = append(equals, fmt.Sprintf("owner_id = $%d", i))
+		i++
+		args = append(args, company.OwnerID)
+	}
+	if company.ActivityFieldId.ID() != 0 {
+		equals = append(equals, fmt.Sprintf("activity_field_id = $%d", i))
+		i++
+		args = append(args, company.ActivityFieldId)
+	}
+	if company.Name != "" {
+		equals = append(equals, fmt.Sprintf("name = $%d", i))
+		i++
+		args = append(args, company.Name)
+	}
+	if company.City != "" {
+		equals = append(equals, fmt.Sprintf("city = $%d", i))
+		i++
+		args = append(args, company.City)
+	}
+	query += strings.Join(equals, ", ")
+	query += fmt.Sprintf(" where id = $%d", i)
+	args = append(args, company.ID)
 
 	_, err = r.db.Exec(
 		ctx,
 		query,
-		company.OwnerID,
-		company.ActivityFieldId,
-		company.Name,
-		company.City,
-		company.ID,
+		args...,
 	)
 	if err != nil {
 		return fmt.Errorf("обновление информации о компании: %w", err)

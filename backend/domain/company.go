@@ -15,7 +15,7 @@ type Company struct {
 
 //go:generate mockgen -source=company.go -destination=../mocks/company.go -package=mocks
 type ICompanyRepository interface {
-	Create(context.Context, *Company) error
+	Create(context.Context, *Company) (*Company, error)
 	GetById(context.Context, uuid.UUID) (*Company, error)
 	GetByOwnerId(context.Context, uuid.UUID, int, bool) ([]*Company, int, error)
 	GetAll(context.Context, int) ([]*Company, error)

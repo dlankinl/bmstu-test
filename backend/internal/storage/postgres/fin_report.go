@@ -7,7 +7,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"math"
 	"ppo/domain"
+	"strings"
 )
 
 type FinReportRepository struct {
@@ -20,11 +22,12 @@ func NewFinReportRepository(db *pgxpool.Pool) domain.IFinancialReportRepository 
 	}
 }
 
-func (r *FinReportRepository) Create(ctx context.Context, finReport *domain.FinancialReport) (err error) {
+func (r *FinReportRepository) Create(ctx context.Context, finReport *domain.FinancialReport) (report *domain.FinancialReport, err error) {
 	query := `insert into ppo.fin_reports(company_id, revenue, costs, year, quarter) 
-	values ($1, $2, $3, $4, $5)`
+	values ($1, $2, $3, $4, $5) returning id`
 
-	_, err = r.db.Exec(
+	var id uuid.UUID
+	err = r.db.QueryRow(
 		ctx,
 		query,
 		finReport.CompanyID,
@@ -32,12 +35,13 @@ func (r *FinReportRepository) Create(ctx context.Context, finReport *domain.Fina
 		finReport.Costs,
 		finReport.Year,
 		finReport.Quarter,
-	)
+	).Scan(&id)
 	if err != nil {
-		return fmt.Errorf("создание финансового отчета: %w", err)
+		return nil, fmt.Errorf("создание финансового отчета: %w", err)
 	}
+	finReport.ID = id
 
-	return nil
+	return finReport, nil
 }
 
 func (r *FinReportRepository) GetById(ctx context.Context, id uuid.UUID) (report *domain.FinancialReport, err error) {
@@ -118,25 +122,45 @@ func (r *FinReportRepository) GetByCompany(ctx context.Context, companyId uuid.U
 }
 
 func (r *FinReportRepository) Update(ctx context.Context, finRep *domain.FinancialReport) (err error) {
-	query := `
-			update ppo.fin_reports
-			set 
-			    company_id = $1, 
-			    revenue = $2,
-			    costs = $3,
-			    year = $4,
-			    quarter = $5
-			where id = $6`
+	query := `update ppo.fin_reports set `
+
+	args := make([]any, 0)
+	i := 1
+	equals := make([]string, 0)
+	if finRep.CompanyID.ID() != 0 {
+		equals = append(equals, fmt.Sprintf("company_id = $%d", i))
+		i++
+		args = append(args, finRep.CompanyID)
+	}
+	if math.Abs(float64(finRep.Revenue)) > 0 {
+		equals = append(equals, fmt.Sprintf("revenue = $%d", i))
+		i++
+		args = append(args, finRep.Revenue)
+	}
+	if math.Abs(float64(finRep.Costs)) > 0 {
+		equals = append(equals, fmt.Sprintf("costs = $%d", i))
+		i++
+		args = append(args, finRep.Costs)
+	}
+	if finRep.Year != 0 {
+		equals = append(equals, fmt.Sprintf("year = $%d", i))
+		i++
+		args = append(args, finRep.Year)
+	}
+	if finRep.Quarter != 0 {
+		equals = append(equals, fmt.Sprintf("quarter = $%d", i))
+		i++
+		args = append(args, finRep.Quarter)
+	}
+
+	query += strings.Join(equals, ", ")
+	query += fmt.Sprintf(" where id = $%d", i)
+	args = append(args, finRep.ID)
 
 	_, err = r.db.Exec(
 		ctx,
 		query,
-		finRep.CompanyID,
-		finRep.Revenue,
-		finRep.Costs,
-		finRep.Year,
-		finRep.Quarter,
-		finRep.ID,
+		args...,
 	)
 	if err != nil {
 		return fmt.Errorf("обновление информации о финансовом отчете: %w", err)

@@ -55,7 +55,7 @@ func (s *FinReportSuite) Test_FinReportCreate(t provider.T) {
 			Create(
 				ctx,
 				&model,
-			).Return(nil)
+			).Return(&model, nil)
 
 		sCtx.WithNewParameters("ctx", ctx, "model", model)
 
@@ -527,7 +527,3 @@ func (s *FinReportSuite) Test_FinReportUpdate2(t provider.T) {
 		sCtx.Assert().Equal(fmt.Errorf("обновление отчета: sql error").Error(), err.Error())
 	})
 }
-
-//func TestSuiteRunner(t *testing.T) {
-//	suite.RunSuite(t, new(FinReportSuite))
-//}

@@ -51,7 +51,7 @@ func (s *CompanySuite) Test_CompanyCreate(t provider.T) {
 			Create(
 				ctx,
 				&model,
-			).Return(nil)
+			).Return(&model, nil)
 
 		repo.EXPECT().
 			GetById(

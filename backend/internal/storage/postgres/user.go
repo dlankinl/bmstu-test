@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"ppo/domain"
 	"ppo/internal/config"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -128,27 +129,49 @@ func (r *UserRepository) GetAll(ctx context.Context, page int) (users []*domain.
 }
 
 func (r *UserRepository) Update(ctx context.Context, user *domain.User) (err error) {
-	query := `
-			update ppo.users
-			set 
-			    full_name = $1, 
-			    birthday = $2, 
-			    gender = $3, 
-			    city = $4,
-			    role = $5,
-			    username = $6
-			where id = $7`
+	query := `update ppo.users set `
+
+	args := make([]any, 0)
+	i := 1
+	equals := make([]string, 0)
+	if user.FullName != "" {
+		equals = append(equals, fmt.Sprintf("full_name = $%d", i))
+		i++
+		args = append(args, user.FullName)
+	}
+	if !user.Birthday.IsZero() {
+		equals = append(equals, fmt.Sprintf("birthday = $%d", i))
+		i++
+		args = append(args, user.Birthday)
+	}
+	if user.Gender != "" {
+		equals = append(equals, fmt.Sprintf("gender = $%d", i))
+		i++
+		args = append(args, user.Gender)
+	}
+	if user.City != "" {
+		equals = append(equals, fmt.Sprintf("city = $%d", i))
+		i++
+		args = append(args, user.City)
+	}
+	if user.Role != "" {
+		equals = append(equals, fmt.Sprintf("role = $%d", i))
+		i++
+		args = append(args, user.Role)
+	}
+	if user.Username != "" {
+		equals = append(equals, fmt.Sprintf("username = $%d", i))
+		i++
+		args = append(args, user.Username)
+	}
+	query += strings.Join(equals, ", ")
+	query += fmt.Sprintf(" where id = $%d", i)
+	args = append(args, user.ID)
 
 	_, err = r.db.Exec(
 		ctx,
 		query,
-		user.FullName,
-		user.Birthday,
-		user.Gender,
-		user.City,
-		user.Role,
-		user.Username,
-		user.ID,
+		args...,
 	)
 	if err != nil {
 		return fmt.Errorf("обновление информации о пользователе: %w", err)

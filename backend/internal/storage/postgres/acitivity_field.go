@@ -3,8 +3,10 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"math"
 	"ppo/domain"
 	"ppo/internal/config"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -21,22 +23,24 @@ func NewActivityFieldRepository(db *pgxpool.Pool) domain.IActivityFieldRepositor
 	}
 }
 
-func (r *ActivityFieldRepository) Create(ctx context.Context, data *domain.ActivityField) (err error) {
+func (r *ActivityFieldRepository) Create(ctx context.Context, data *domain.ActivityField) (res *domain.ActivityField, err error) {
 	query := `insert into ppo.activity_fields(name, description, cost) 
-	values ($1, $2, $3)`
+	values ($1, $2, $3) returning id`
 
-	_, err = r.db.Exec(
+	var id uuid.UUID
+	err = r.db.QueryRow(
 		ctx,
 		query,
 		data.Name,
 		data.Description,
 		data.Cost,
-	)
+	).Scan(&id)
 	if err != nil {
-		return fmt.Errorf("создание сферы деятельности: %w", err)
+		return nil, fmt.Errorf("создание сферы деятельности: %w", err)
 	}
+	data.ID = id
 
-	return nil
+	return data, nil
 }
 
 func (r *ActivityFieldRepository) DeleteById(ctx context.Context, id uuid.UUID) (err error) {
@@ -55,21 +59,34 @@ func (r *ActivityFieldRepository) DeleteById(ctx context.Context, id uuid.UUID) 
 }
 
 func (r *ActivityFieldRepository) Update(ctx context.Context, data *domain.ActivityField) (err error) {
-	query := `
-			update ppo.activity_fields
-			set 
-			    name = $1,
-			    description = $2, 
-			    cost = $3
-			where id = $4`
+	query := `update ppo.activity_fields set `
+
+	args := make([]any, 0)
+	i := 1
+	equals := make([]string, 0)
+	if data.Name != "" {
+		equals = append(equals, fmt.Sprintf("name = $%d", i))
+		i++
+		args = append(args, data.Name)
+	}
+	if data.Description != "" {
+		equals = append(equals, fmt.Sprintf("description = $%d", i))
+		i++
+		args = append(args, data.Description)
+	}
+	if math.Abs(float64(data.Cost)) > 0 {
+		equals = append(equals, fmt.Sprintf("cost = $%d", i))
+		i++
+		args = append(args, data.Cost)
+	}
+	query += strings.Join(equals, ", ")
+	query += fmt.Sprintf(" where id = $%d", i)
+	args = append(args, data.ID)
 
 	_, err = r.db.Exec(
 		ctx,
 		query,
-		data.Name,
-		data.Description,
-		data.Cost,
-		data.ID,
+		args...,
 	)
 	if err != nil {
 		return fmt.Errorf("обновление информации о сфере деятельности: %w", err)

@@ -49,7 +49,7 @@ func (s *ActFieldSuite) Test_ActFieldCreate(t provider.T) {
 			Create(
 				ctx,
 				&model,
-			).Return(nil)
+			).Return(&model, nil)
 
 		sCtx.WithNewParameters("ctx", ctx, "model", model)
 
@@ -92,7 +92,7 @@ func (s *ActFieldSuite) Test_ActFieldCreate2(t provider.T) {
 			Create(
 				ctx,
 				&model,
-			).Return(nil).
+			).Return(&model, nil).
 			AnyTimes()
 
 		sCtx.WithNewParameters("ctx", ctx, "model", model)
@@ -137,7 +137,7 @@ func (s *ActFieldSuite) Test_ActFieldCreate3(t provider.T) {
 			Create(
 				ctx,
 				&model,
-			).Return(fmt.Errorf("sql error")).
+			).Return(nil, fmt.Errorf("sql error")).
 			AnyTimes()
 
 		sCtx.WithNewParameters("ctx", ctx, "model", model)

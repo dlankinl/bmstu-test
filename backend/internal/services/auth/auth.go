@@ -49,7 +49,6 @@ func (s *Service) Register(ctx context.Context, authInfo *domain.UserAuth) (err 
 
 	authInfo.HashedPass = hashedPass
 
-	fmt.Println(authInfo)
 	err = s.authRepo.Register(ctx, authInfo)
 	if err != nil {
 		s.logger.Infof("%s: регистрация пользователя: %v", prompt, err)
