@@ -412,7 +412,3 @@ func (s *UserSuite) Test_UserUpdate2(t provider.T) {
 		sCtx.Assert().Equal(fmt.Errorf("обновление информации о пользователе: sql error").Error(), err.Error())
 	})
 }
-
-//func TestSuiteRunner(t *testing.T) {
-//	suite.RunSuite(t, new(UserSuite))
-//}

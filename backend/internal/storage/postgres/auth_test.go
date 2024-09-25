@@ -2,89 +2,93 @@ package postgres
 
 import (
 	"context"
-	"errors"
-	"github.com/stretchr/testify/require"
-	"ppo/domain"
-	"testing"
+	"github.com/ozontech/allure-go/pkg/framework/provider"
+	"github.com/ozontech/allure-go/pkg/framework/suite"
+	"go.uber.org/mock/gomock"
+	"ppo/internal/utils"
+	"ppo/mocks"
 )
 
-func TestAuthRepository_Register(t *testing.T) {
-	repo := NewAuthRepository(testDbInstance)
-
-	testCases := []struct {
-		name     string
-		authInfo *domain.UserAuth
-		wantErr  bool
-		errStr   error
-	}{
-		{
-			name: "успех",
-			authInfo: &domain.UserAuth{
-				Username:   "test123",
-				HashedPass: "test123",
-			},
-			wantErr: false,
-		},
-		{
-			name: "неуникальное имя пользователь",
-			authInfo: &domain.UserAuth{
-				Username:   "test123",
-				HashedPass: "test123",
-			},
-			wantErr: true,
-			errStr: errors.New("регистрация пользователя: ERROR: duplicate key value violates unique " +
-				"constraint \"users_username_key\" (SQLSTATE 23505)"),
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			err := repo.Register(context.Background(), tc.authInfo)
-
-			if tc.wantErr {
-				require.Equal(t, tc.errStr.Error(), err.Error())
-			} else {
-				require.Nil(t, err)
-			}
-		})
-	}
+type StorageAuthSuite struct {
+	suite.Suite
+	repo *mocks.MockIAuthRepository
+	ctrl *gomock.Controller
 }
 
-func TestAuthRepository_GetByUsername(t *testing.T) {
-	repo := NewAuthRepository(testDbInstance)
+func (s *StorageAuthSuite) BeforeAll(t provider.T) {
+	s.ctrl = gomock.NewController(t)
+	s.repo = mocks.NewMockIAuthRepository(s.ctrl)
+}
 
-	testCases := []struct {
-		name     string
-		username string
-		expected *domain.UserAuth
-		wantErr  bool
-		errStr   error
-	}{
-		{
-			name:     "пользователь найден",
-			username: "user3",
-			expected: &domain.UserAuth{
-				Username:   "user3",
-				HashedPass: "user3hehe",
-			},
-			wantErr: false,
-		},
-		{
-			name:     "пользователь не найден",
-			username: "test1234",
-			wantErr:  true,
-			errStr:   errors.New("получение пользователя по username: no rows in result set"),
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			res, err := repo.GetByUsername(context.Background(), tc.username)
+func (s *StorageAuthSuite) AfterAll(t provider.T) {
+	s.ctrl.Finish()
+}
 
-			if tc.wantErr {
-				require.Equal(t, tc.errStr.Error(), err.Error())
-			} else {
-				require.Nil(t, err)
-				require.Equal(t, tc.expected.HashedPass, res.HashedPass)
-			}
-		})
-	}
+func (s *StorageAuthSuite) Test_AuthStorageRegister(t provider.T) {
+	t.Title("[AuthRegister] Success")
+	t.Tags("storage", "auth", "register")
+	t.Parallel()
+	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
+		registerModel := utils.UserAuthMother{}.WithHashedPassUser()
+		s.repo.EXPECT().
+			Register(
+				context.TODO(),
+				&registerModel,
+			).
+			Return(nil)
+
+		ctx := context.TODO()
+
+		sCtx.WithNewParameters("ctx", ctx, "model", registerModel)
+
+		err := s.repo.Register(ctx, &registerModel)
+
+		sCtx.Assert().NoError(err)
+	})
+}
+
+func (s *StorageAuthSuite) Test_AuthStorageRegister2(t provider.T) {
+	t.Title("[AuthRegister] Fail")
+	t.Tags("storage", "auth", "register")
+	t.Parallel()
+	t.WithNewStep("Empty username", func(sCtx provider.StepCtx) {
+		ctx := context.TODO()
+
+		model := utils.UserAuthMother{}.WithoutUsernameUser()
+		sCtx.WithNewParameters("ctx", ctx, "model", model)
+
+		s.repo.EXPECT().
+			Register(
+				ctx,
+				&model,
+			).Return(nil)
+
+		err := s.repo.Register(ctx, &model)
+
+		sCtx.Assert().NoError(err)
+	})
+}
+
+func (s *StorageAuthSuite) Test_AuthStorageGetByUsername(t provider.T) {
+	t.Title("[AuthLogin] Success")
+	t.Tags("storage", "auth", "login")
+	t.Parallel()
+	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
+		model := utils.UserAuthMother{}.WithHashedPassUser()
+		s.repo.EXPECT().
+			GetByUsername(
+				context.TODO(),
+				"test",
+			).
+			Return(&model, nil)
+
+		ctx := context.TODO()
+
+		sCtx.WithNewParameters("ctx", ctx, "model", model)
+
+		userAuth, err := s.repo.GetByUsername(ctx, model.Username)
+
+		sCtx.Assert().NoError(err)
+		sCtx.Assert().Equal(&model, userAuth)
+	})
 }

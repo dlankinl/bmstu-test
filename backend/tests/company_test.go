@@ -622,7 +622,3 @@ func (s *CompanySuite) Test_CompanyUpdate2(t provider.T) {
 		sCtx.Assert().Equal(fmt.Errorf("обновление информации о компании: sql error").Error(), err.Error())
 	})
 }
-
-//func TestSuiteRunner(t *testing.T) {
-//	suite.RunSuite(t, new(CompanySuite))
-//}
