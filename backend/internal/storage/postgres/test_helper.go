@@ -102,7 +102,9 @@ func migrateDb(dbAddr string) error {
 	}
 
 	relativePathToMigrationFiles := "./migrations"
+	//relativePathToMigrationFiles := "./test_data_2"
 	pathToMigrationFiles := filepath.Join(currentDir, "..", "..", "..", relativePathToMigrationFiles)
+	//pathToMigrationFiles := filepath.Join(currentDir, "..", "..", "..", "sql", relativePathToMigrationFiles)
 
 	databaseURL := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", DbUser, DbPass, dbAddr, DbName)
 	m, err := migrate.New(fmt.Sprintf("file:%s", pathToMigrationFiles), databaseURL)
@@ -125,8 +127,24 @@ func SeedTestData(db *pgxpool.Pool) error {
 	if err != nil {
 		return fmt.Errorf("ошибка при чтении директории с тестовыми данными: %w", err)
 	}
-
+	orderedFiles := make(map[int]os.DirEntry)
 	for _, file := range files {
+		switch file.Name() {
+		case "activity_fields.sql":
+			orderedFiles[0] = file
+		case "users.sql":
+			orderedFiles[1] = file
+		case "contacts.sql":
+			orderedFiles[2] = file
+		case "companies.sql":
+			orderedFiles[3] = file
+		case "fin_reports.sql":
+			orderedFiles[4] = file
+		}
+	}
+
+	for i := 0; i < len(files); i++ {
+		file := orderedFiles[i]
 		if !file.IsDir() {
 			filePath := filepath.Join(testDataDir, file.Name())
 			err = executeTestDataScript(db, filePath)
