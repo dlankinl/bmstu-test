@@ -92,7 +92,7 @@ func (s *StorageFinReportSuite) Test_FinReportStorageDeleteById(t provider.T) {
 	t.Tags("storage", "finReport", "deleteById")
 	t.Parallel()
 	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
-		reportId := uuid.UUID{1}
+		reportId := uuid.UUID{100}
 		ctx := context.TODO()
 
 		s.repo.EXPECT().
@@ -175,7 +175,7 @@ func (s *StorageFinReportSuite) Test_FinReportStorageGetByCompany2(t provider.T)
 	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()
 
-		compId := uuid.UUID{0}
+		compId := uuid.UUID{1}
 		period := utils.NewPeriodBuilder().
 			WithStartYear(2).
 			WithEndYear(1).

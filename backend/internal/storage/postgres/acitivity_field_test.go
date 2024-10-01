@@ -6,24 +6,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/ozontech/allure-go/pkg/framework/provider"
 	"github.com/ozontech/allure-go/pkg/framework/suite"
-	"go.uber.org/mock/gomock"
+	"github.com/pashagolub/pgxmock/v4"
 	"ppo/internal/utils"
-	"ppo/mocks"
 )
 
 type StorageActFieldSuite struct {
 	suite.Suite
-	repo *mocks.MockIActivityFieldRepository
-	ctrl *gomock.Controller
-}
-
-func (s *StorageActFieldSuite) BeforeAll(t provider.T) {
-	s.ctrl = gomock.NewController(t)
-	s.repo = mocks.NewMockIActivityFieldRepository(s.ctrl)
-}
-
-func (s *StorageActFieldSuite) AfterAll(t provider.T) {
-	s.ctrl.Finish()
 }
 
 func (s *StorageActFieldSuite) Test_ActFieldStorageCreate(t provider.T) {
@@ -34,15 +22,19 @@ func (s *StorageActFieldSuite) Test_ActFieldStorageCreate(t provider.T) {
 		model := utils.ActivityFieldMother{}.Default()
 		ctx := context.TODO()
 
-		s.repo.EXPECT().
-			Create(
-				ctx,
-				&model,
-			).Return(&model, nil)
+		mock, err := pgxmock.NewPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer mock.Close()
+
+		mock.ExpectQuery("insert").WithArgs(model.Name, model.Description, model.Cost).WillReturnRows(pgxmock.NewRows([]string{"id"}).AddRow(model.ID))
+
+		repo := NewActivityFieldRepository(mock)
 
 		sCtx.WithNewParameters("ctx", ctx, "model", model)
 
-		res, err := s.repo.Create(ctx, &model)
+		res, err := repo.Create(ctx, &model)
 
 		sCtx.Assert().NoError(err)
 		sCtx.Assert().Equal(&model, res)
@@ -50,30 +42,6 @@ func (s *StorageActFieldSuite) Test_ActFieldStorageCreate(t provider.T) {
 }
 
 func (s *StorageActFieldSuite) Test_ActFieldStorageCreate2(t provider.T) {
-	t.Title("[ActFieldCreate] Пустое название сферы деятельности")
-	t.Tags("storage", "actField", "Fail")
-	t.Parallel()
-	t.WithNewStep("Fail", func(sCtx provider.StepCtx) {
-		model := utils.ActivityFieldMother{}.WithoutName()
-		ctx := context.TODO()
-
-		s.repo.EXPECT().
-			Create(
-				ctx,
-				&model,
-			).Return(&model, nil).
-			AnyTimes()
-
-		sCtx.WithNewParameters("ctx", ctx, "model", model)
-
-		res, err := s.repo.Create(ctx, &model)
-
-		sCtx.Assert().NoError(err)
-		sCtx.Assert().Equal(&model, res)
-	})
-}
-
-func (s *StorageActFieldSuite) Test_ActFieldStorageCreate3(t provider.T) {
 	t.Title("[ActFieldCreate] Ошибка в репозитории")
 	t.Tags("storage", "actField", "Fail")
 	t.Parallel()
@@ -81,18 +49,22 @@ func (s *StorageActFieldSuite) Test_ActFieldStorageCreate3(t provider.T) {
 		model := utils.NewActivityFieldBuilder().WithName("test").Build()
 		ctx := context.TODO()
 
-		s.repo.EXPECT().
-			Create(
-				ctx,
-				&model,
-			).Return(nil, fmt.Errorf("sql error"))
+		mock, err := pgxmock.NewPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer mock.Close()
+
+		mock.ExpectQuery("insert").WithArgs(model.Name, model.Description, model.Cost).WillReturnError(fmt.Errorf("sql error"))
+
+		repo := NewActivityFieldRepository(mock)
 
 		sCtx.WithNewParameters("ctx", ctx, "model", model)
 
-		_, err := s.repo.Create(ctx, &model)
+		_, err = repo.Create(ctx, &model)
 
 		sCtx.Assert().Error(err)
-		sCtx.Assert().Equal(fmt.Errorf("sql error").Error(), err.Error())
+		sCtx.Assert().Equal(fmt.Errorf("создание сферы деятельности: sql error").Error(), err.Error())
 	})
 }
 
@@ -104,15 +76,24 @@ func (s *StorageActFieldSuite) Test_ActFieldStorageDeleteById(t provider.T) {
 		id := uuid.UUID{0}
 		ctx := context.TODO()
 
-		s.repo.EXPECT().
-			DeleteById(ctx, id).
-			Return(nil)
+		mock, err := pgxmock.NewPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer mock.Close()
+
+		mock.ExpectExec("delete").WithArgs(id).WillReturnResult(pgxmock.NewResult("delete", 1))
 
 		sCtx.WithNewParameters("ctx", ctx, "model", id)
 
-		err := s.repo.DeleteById(ctx, id)
+		repo := NewActivityFieldRepository(mock)
+		err = repo.DeleteById(ctx, id)
 
 		sCtx.Assert().NoError(err)
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("there were unfulfilled expectations: %s", err)
+		}
 	})
 }
 
@@ -124,16 +105,21 @@ func (s *StorageActFieldSuite) Test_ActFieldStorageDeleteById2(t provider.T) {
 		id := uuid.UUID{1}
 		ctx := context.TODO()
 
-		s.repo.EXPECT().
-			DeleteById(ctx, id).
-			Return(fmt.Errorf("sql error"))
+		mock, err := pgxmock.NewPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer mock.Close()
+
+		mock.ExpectExec("delete").WithArgs(id).WillReturnError(fmt.Errorf("sql error"))
 
 		sCtx.WithNewParameters("ctx", ctx, "model", id)
 
-		err := s.repo.DeleteById(ctx, id)
+		repo := NewActivityFieldRepository(mock)
+		err = repo.DeleteById(ctx, id)
 
 		sCtx.Assert().Error(err)
-		sCtx.Assert().Equal(fmt.Errorf("sql error").Error(), err.Error())
+		sCtx.Assert().Equal(fmt.Errorf("удаление сферы деятельности по id: sql error").Error(), err.Error())
 	})
 }
 
@@ -150,16 +136,20 @@ func (s *StorageActFieldSuite) Test_ActFieldStorageGetById(t provider.T) {
 			WithID(id).
 			Build()
 
-		s.repo.EXPECT().
-			GetById(
-				ctx,
-				id,
-			).
-			Return(&returnedModel, nil)
+		mock, err := pgxmock.NewPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer mock.Close()
+
+		mock.ExpectQuery("select").WithArgs(id).WillReturnRows(pgxmock.
+			NewRows([]string{"name", "description", "cost"}).AddRow(returnedModel.Name, returnedModel.Description, returnedModel.Cost))
+
+		repo := NewActivityFieldRepository(mock)
 
 		sCtx.WithNewParameters("ctx", ctx, "model", id)
 
-		model, err := s.repo.GetById(ctx, id)
+		model, err := repo.GetById(ctx, id)
 
 		sCtx.Assert().NoError(err)
 		sCtx.Assert().Equal(returnedModel, *model)
@@ -174,19 +164,22 @@ func (s *StorageActFieldSuite) Test_ActFieldStorageGetById2(t provider.T) {
 		id := uuid.UUID{3}
 		ctx := context.TODO()
 
-		s.repo.EXPECT().
-			GetById(
-				ctx,
-				id,
-			).
-			Return(nil, fmt.Errorf("sql error"))
+		mock, err := pgxmock.NewPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer mock.Close()
+
+		mock.ExpectQuery("select").WithArgs(id).WillReturnError(fmt.Errorf("sql error"))
+
+		repo := NewActivityFieldRepository(mock)
 
 		sCtx.WithNewParameters("ctx", ctx, "model", id)
 
-		_, err := s.repo.GetById(ctx, id)
+		_, err = repo.GetById(ctx, id)
 
 		sCtx.Assert().Error(err)
-		sCtx.Assert().Equal(fmt.Errorf("sql error").Error(), err.Error())
+		sCtx.Assert().Equal(fmt.Errorf("получение сферы деятельности по id: sql error").Error(), err.Error())
 	})
 }
 
@@ -202,15 +195,19 @@ func (s *StorageActFieldSuite) Test_ActFieldStorageUpdate(t provider.T) {
 			WithID(id).
 			Build()
 
-		s.repo.EXPECT().
-			Update(
-				ctx,
-				&model,
-			).Return(nil)
+		mock, err := pgxmock.NewPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer mock.Close()
+
+		mock.ExpectExec("update").WithArgs(model.Name, model.ID).WillReturnResult(pgxmock.NewResult("update", 1))
+
+		repo := NewActivityFieldRepository(mock)
 
 		sCtx.WithNewParameters("ctx", ctx, "model", model)
 
-		err := s.repo.Update(ctx, &model)
+		err = repo.Update(ctx, &model)
 
 		sCtx.Assert().NoError(err)
 	})
@@ -228,17 +225,21 @@ func (s *StorageActFieldSuite) Test_ActFieldStorageUpdate2(t provider.T) {
 			WithID(id).
 			Build()
 
-		s.repo.EXPECT().
-			Update(
-				ctx,
-				&model,
-			).Return(fmt.Errorf("sql error"))
+		mock, err := pgxmock.NewPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer mock.Close()
+
+		mock.ExpectExec("update").WithArgs(model.Name, model.ID).WillReturnError(fmt.Errorf("sql error"))
+
+		repo := NewActivityFieldRepository(mock)
 
 		sCtx.WithNewParameters("ctx", ctx, "model", model)
 
-		err := s.repo.Update(ctx, &model)
+		err = repo.Update(ctx, &model)
 
 		sCtx.Assert().Error(err)
-		sCtx.Assert().Equal(fmt.Errorf("sql error").Error(), err.Error())
+		sCtx.Assert().Equal(fmt.Errorf("обновление информации о сфере деятельности: sql error").Error(), err.Error())
 	})
 }

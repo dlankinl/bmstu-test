@@ -5,17 +5,17 @@ import (
 	"fmt"
 	"ppo/domain"
 	"ppo/internal/config"
+	"ppo/internal/storage"
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type UserRepository struct {
-	db *pgxpool.Pool
+	db storage.DBConn
 }
 
-func NewUserRepository(db *pgxpool.Pool) domain.IUserRepository {
+func NewUserRepository(db storage.DBConn) domain.IUserRepository {
 	return &UserRepository{
 		db: db,
 	}

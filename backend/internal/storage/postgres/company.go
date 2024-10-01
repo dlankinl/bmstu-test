@@ -5,18 +5,18 @@ import (
 	"fmt"
 	"ppo/domain"
 	"ppo/internal/config"
+	"ppo/internal/storage"
 	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type CompanyRepository struct {
-	db *pgxpool.Pool
+	db storage.DBConn
 }
 
-func NewCompanyRepository(db *pgxpool.Pool) domain.ICompanyRepository {
+func NewCompanyRepository(db storage.DBConn) domain.ICompanyRepository {
 	return &CompanyRepository{
 		db: db,
 	}
@@ -133,14 +133,6 @@ func (r *CompanyRepository) GetByOwnerId(ctx context.Context, id uuid.UUID, page
 }
 
 func (r *CompanyRepository) Update(ctx context.Context, company *domain.Company) (err error) {
-	//query := `
-	//		update ppo.companies
-	//		set
-	//		    owner_id = $1,
-	//		    activity_field_id = $2,
-	//		    name = $3,
-	//		    city = $4
-	//		where id = $5`
 	query := "update ppo.companies set "
 
 	args := make([]any, 0)
@@ -251,6 +243,7 @@ func (r *CompanyRepository) GetAll(ctx context.Context, page int) (companies []*
 		if err != nil {
 			return nil, fmt.Errorf("сканирование полученных строк: %w", err)
 		}
+		companies = append(companies, tmp)
 	}
 
 	return companies, nil

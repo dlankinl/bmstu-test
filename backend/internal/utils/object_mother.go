@@ -62,6 +62,16 @@ func (m CompanyMother) Default() domain.Company {
 	}
 }
 
+func (m CompanyMother) WithID(id uuid.UUID) domain.Company {
+	return domain.Company{
+		ID:              id,
+		Name:            "aaa",
+		City:            "aaa",
+		ActivityFieldId: uuid.UUID{0},
+		OwnerID:         uuid.UUID{0},
+	}
+}
+
 type FinReportMother struct{}
 
 func (m FinReportMother) ForBigPeriod(startYear, startQuarter, endYear, endQuarter int, revenues, costs []float32) []domain.FinancialReport {

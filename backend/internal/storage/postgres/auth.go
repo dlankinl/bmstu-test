@@ -3,15 +3,16 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/google/uuid"
 	"ppo/domain"
+	"ppo/internal/storage"
 )
 
 type AuthRepository struct {
-	db *pgxpool.Pool
+	db storage.DBConn
 }
 
-func NewAuthRepository(db *pgxpool.Pool) domain.IAuthRepository {
+func NewAuthRepository(db storage.DBConn) domain.IAuthRepository {
 	return &AuthRepository{
 		db: db,
 	}
@@ -36,19 +37,27 @@ func (r *AuthRepository) Register(ctx context.Context, authInfo *domain.UserAuth
 func (r *AuthRepository) GetByUsername(ctx context.Context, username string) (data *domain.UserAuth, err error) {
 	query := `select id, password, role from ppo.users where username = $1`
 
+	var id uuid.UUID
+	var hashedPass, role string
 	tmp := new(UserAuth)
 	err = r.db.QueryRow(
 		ctx,
 		query,
 		username,
 	).Scan(
-		&tmp.ID,
-		&tmp.HashedPass,
-		&tmp.Role,
+		&id,
+		&hashedPass,
+		&role,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("получение пользователя по username: %w", err)
 	}
+
+	tmp.ID = id
+	tmp.HashedPass.String = hashedPass
+	tmp.HashedPass.Valid = true
+	tmp.Role.String = role
+	tmp.Role.Valid = true
 
 	return UserAuthDbToUserAuth(tmp), nil
 }

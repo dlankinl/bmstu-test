@@ -6,27 +6,15 @@ import (
 	"github.com/google/uuid"
 	"github.com/ozontech/allure-go/pkg/framework/provider"
 	"github.com/ozontech/allure-go/pkg/framework/suite"
-	"go.uber.org/mock/gomock"
+	"github.com/pashagolub/pgxmock/v4"
 	"ppo/domain"
-	"ppo/internal/services/user"
+	"ppo/internal/config"
 	"ppo/internal/utils"
-	"ppo/mocks"
 	"time"
 )
 
 type StorageUserSuite struct {
 	suite.Suite
-	repo *mocks.MockIUserRepository
-	ctrl *gomock.Controller
-}
-
-func (s *StorageUserSuite) BeforeAll(t provider.T) {
-	s.ctrl = gomock.NewController(t)
-	s.repo = mocks.NewMockIUserRepository(s.ctrl)
-}
-
-func (s *StorageUserSuite) AfterAll(t provider.T) {
-	s.ctrl.Finish()
 }
 
 func (s *StorageUserSuite) Test_UserStorageDeleteById(t provider.T) {
@@ -34,16 +22,22 @@ func (s *StorageUserSuite) Test_UserStorageDeleteById(t provider.T) {
 	t.Tags("storage", "user", "deleteById")
 	t.Parallel()
 	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
-		uID := uuid.UUID{1}
+		id := uuid.UUID{1}
 		ctx := context.TODO()
 
-		s.repo.EXPECT().
-			DeleteById(ctx, uID).
-			Return(nil)
+		mock, err := pgxmock.NewPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer mock.Close()
 
-		sCtx.WithNewParameters("ctx", ctx, "model", uID)
+		mock.ExpectExec("delete").WithArgs(id).WillReturnResult(pgxmock.NewResult("delete", 1))
 
-		err := s.repo.DeleteById(ctx, uID)
+		repo := NewUserRepository(mock)
+
+		sCtx.WithNewParameters("ctx", ctx, "model", id)
+
+		err = repo.DeleteById(ctx, id)
 
 		sCtx.Assert().NoError(err)
 	})
@@ -54,19 +48,25 @@ func (s *StorageUserSuite) Test_UserStorageDeleteById2(t provider.T) {
 	t.Tags("storage", "user", "deleteById")
 	t.Parallel()
 	t.WithNewStep("Fail", func(sCtx provider.StepCtx) {
-		uID := uuid.UUID{2}
+		id := uuid.UUID{2}
 		ctx := context.TODO()
 
-		s.repo.EXPECT().
-			DeleteById(ctx, uID).
-			Return(fmt.Errorf("sql error"))
+		mock, err := pgxmock.NewPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer mock.Close()
 
-		sCtx.WithNewParameters("ctx", ctx, "model", uID)
+		mock.ExpectExec("delete").WithArgs(id).WillReturnError(fmt.Errorf("sql error"))
 
-		err := s.repo.DeleteById(ctx, uID)
+		repo := NewUserRepository(mock)
+
+		sCtx.WithNewParameters("ctx", ctx, "model", id)
+
+		err = repo.DeleteById(ctx, id)
 
 		sCtx.Assert().Error(err)
-		sCtx.Assert().Equal(fmt.Errorf("sql error").Error(), err.Error())
+		sCtx.Assert().Equal(fmt.Errorf("удаление пользователя по id: sql error").Error(), err.Error())
 	})
 }
 
@@ -82,7 +82,7 @@ func (s *StorageUserSuite) Test_UserStorageGetAll(t provider.T) {
 			WithUsername("a").
 			WithFullName("a").
 			WithGender("m").
-			WithBirthday(time.Date(1, 1, 1, 1, 1, 1, 1, time.Local)).
+			WithBirthday(time.Date(1, 1, 1, 1, 1, 1, 1, time.UTC)).
 			WithCity("a").
 			Build()
 		user2 := utils.NewUserBuilder().
@@ -90,7 +90,7 @@ func (s *StorageUserSuite) Test_UserStorageGetAll(t provider.T) {
 			WithUsername("b").
 			WithFullName("b").
 			WithGender("w").
-			WithBirthday(time.Date(2, 2, 2, 2, 2, 2, 2, time.Local)).
+			WithBirthday(time.Date(2, 2, 2, 2, 2, 2, 2, time.UTC)).
 			WithCity("b").
 			Build()
 		user3 := utils.NewUserBuilder().
@@ -98,19 +98,38 @@ func (s *StorageUserSuite) Test_UserStorageGetAll(t provider.T) {
 			WithUsername("c").
 			WithFullName("c").
 			WithGender("m").
-			WithBirthday(time.Date(3, 3, 3, 3, 3, 3, 3, time.Local)).
+			WithBirthday(time.Date(3, 3, 3, 3, 3, 3, 3, time.UTC)).
 			WithCity("c").
 			Build()
 
 		users := []*domain.User{&user1, &user2, &user3}
+		page := 1
 
-		s.repo.EXPECT().
-			GetAll(ctx, 1).
-			Return(users, 1, nil)
+		mock, err := pgxmock.NewPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer mock.Close()
+
+		mock.ExpectQuery("select").
+			WithArgs(
+				config.PageSize*(page-1),
+				config.PageSize,
+			).
+			WillReturnRows(
+				pgxmock.NewRows([]string{"id", "username", "full_name", "birthday", "gender", "city"}).
+					AddRow(users[0].ID, users[0].Username, users[0].FullName, users[0].Birthday, users[0].Gender, users[0].City).
+					AddRow(users[1].ID, users[1].Username, users[1].FullName, users[1].Birthday, users[1].Gender, users[1].City).
+					AddRow(users[2].ID, users[2].Username, users[2].FullName, users[2].Birthday, users[2].Gender, users[2].City),
+			)
+
+		mock.ExpectQuery("select").WillReturnRows(pgxmock.NewRows([]string{"count"}).AddRow(3))
 
 		sCtx.WithNewParameters("ctx", ctx, "model", users)
 
-		got, _, err := s.repo.GetAll(ctx, 1)
+		repo := NewUserRepository(mock)
+
+		got, _, err := repo.GetAll(ctx, page)
 
 		sCtx.Assert().NoError(err)
 		sCtx.Assert().Equal(users, got)
@@ -123,17 +142,29 @@ func (s *StorageUserSuite) Test_UserStorageGetAll2(t provider.T) {
 	t.Parallel()
 	t.WithNewStep("Fail", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()
+		page := 1
 
-		s.repo.EXPECT().
-			GetAll(ctx, 1).
-			Return(nil, 0, fmt.Errorf("sql error"))
+		mock, err := pgxmock.NewPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer mock.Close()
 
-		sCtx.WithNewParameters("ctx", ctx, "model", 0)
+		mock.ExpectQuery("select").
+			WithArgs(
+				config.PageSize*(page-1),
+				config.PageSize,
+			).
+			WillReturnError(fmt.Errorf("sql error"))
 
-		_, _, err := s.repo.GetAll(ctx, 1)
+		sCtx.WithNewParameters("ctx", ctx, "model", page)
+
+		repo := NewUserRepository(mock)
+
+		_, _, err = repo.GetAll(ctx, page)
 
 		sCtx.Assert().Error(err)
-		sCtx.Assert().Equal(fmt.Errorf("sql error").Error(), err.Error())
+		sCtx.Assert().Equal(fmt.Errorf("получение предпринимателей: sql error").Error(), err.Error())
 	})
 }
 
@@ -142,32 +173,10 @@ func (s *StorageUserSuite) Test_UserGetById(t provider.T) {
 	t.Tags("user", "getById")
 	t.Parallel()
 	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		uRepo := mocks.NewMockIUserRepository(ctrl)
-		cRepo := mocks.NewMockICompanyRepository(ctrl)
-		aRepo := mocks.NewMockIActivityFieldRepository(ctrl)
-		log := mocks.NewMockILogger(ctrl)
-		svc := user.NewService(uRepo, cRepo, aRepo, log)
-
-		log.EXPECT().
-			Infof(gomock.Any()).
-			AnyTimes()
-		log.EXPECT().
-			Infof(gomock.Any(), gomock.Any()).
-			AnyTimes()
-		log.EXPECT().
-			Warnf(gomock.Any(), gomock.Any()).
-			AnyTimes()
-		log.EXPECT().
-			Errorf(gomock.Any(), gomock.Any()).
-			AnyTimes()
-
 		ctx := context.TODO()
-		uId := uuid.UUID{1}
+		id := uuid.UUID{1}
 		model := utils.NewUserBuilder().
-			WithId(uId).
+			WithId(id).
 			WithUsername("a").
 			WithFullName("a b c").
 			WithGender("m").
@@ -175,19 +184,24 @@ func (s *StorageUserSuite) Test_UserGetById(t provider.T) {
 			WithCity("a").
 			Build()
 
-		uRepo.EXPECT().
-			GetById(
-				ctx,
-				uuid.UUID{1},
-			).
-			Return(&model, nil)
+		mock, err := pgxmock.NewPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer mock.Close()
+
+		mock.ExpectQuery("select").WithArgs(id).WillReturnRows(pgxmock.
+			NewRows([]string{"username", "full_name", "birthday", "gender", "city", "role"}).
+			AddRow(model.Username, model.FullName, model.Birthday, model.Gender, model.City, model.Role))
+
+		repo := NewUserRepository(mock)
 
 		sCtx.WithNewParameters("ctx", ctx, "model", model)
 
-		user, err := svc.GetById(ctx, uId)
+		user, err := repo.GetById(ctx, id)
 
 		sCtx.Assert().NoError(err)
-		sCtx.Assert().Equal(&model, user)
+		sCtx.Assert().Equal(model, *user)
 	})
 }
 
@@ -197,21 +211,24 @@ func (s *StorageUserSuite) Test_UserStorageGetById2(t provider.T) {
 	t.Parallel()
 	t.WithNewStep("Fail", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()
-		uId := uuid.UUID{4}
+		id := uuid.UUID{4}
 
-		s.repo.EXPECT().
-			GetById(
-				ctx,
-				uId,
-			).
-			Return(nil, fmt.Errorf("sql error"))
+		mock, err := pgxmock.NewPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer mock.Close()
 
-		sCtx.WithNewParameters("ctx", ctx, "model", uId)
+		mock.ExpectQuery("select").WithArgs(id).WillReturnError(fmt.Errorf("sql error"))
 
-		_, err := s.repo.GetById(ctx, uId)
+		repo := NewUserRepository(mock)
+
+		sCtx.WithNewParameters("ctx", ctx, "model", id)
+
+		_, err = repo.GetById(ctx, id)
 
 		sCtx.Assert().Error(err)
-		sCtx.Assert().Equal(fmt.Errorf("sql error").Error(), err.Error())
+		sCtx.Assert().Equal(fmt.Errorf("получение пользователя по id: sql error").Error(), err.Error())
 	})
 }
 
@@ -221,22 +238,27 @@ func (s *StorageUserSuite) Test_UserStorageUpdate(t provider.T) {
 	t.Parallel()
 	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()
-		uId := uuid.UUID{1}
+		id := uuid.UUID{1}
 		model := utils.NewUserBuilder().
-			WithId(uId).
+			WithId(id).
 			WithCity("a").
 			WithRole("admin").
 			Build()
 
-		s.repo.EXPECT().
-			Update(
-				ctx,
-				&model,
-			).Return(nil)
+		mock, err := pgxmock.NewPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer mock.Close()
+
+		mock.ExpectExec("update").WithArgs(model.City, model.Role, model.ID).
+			WillReturnResult(pgxmock.NewResult("update", 1))
+
+		repo := NewUserRepository(mock)
 
 		sCtx.WithNewParameters("ctx", ctx, "model", model)
 
-		err := s.repo.Update(ctx, &model)
+		err = repo.Update(ctx, &model)
 
 		sCtx.Assert().NoError(err)
 	})
@@ -255,17 +277,22 @@ func (s *StorageUserSuite) Test_UserUpdate2(t provider.T) {
 			WithRole("admin").
 			Build()
 
-		s.repo.EXPECT().
-			Update(
-				ctx,
-				&model,
-			).Return(fmt.Errorf("sql error"))
+		mock, err := pgxmock.NewPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer mock.Close()
+
+		mock.ExpectExec("update").WithArgs(model.City, model.Role, model.ID).
+			WillReturnError(fmt.Errorf("sql error"))
+
+		repo := NewUserRepository(mock)
 
 		sCtx.WithNewParameters("ctx", ctx, "model", model)
 
-		err := s.repo.Update(ctx, &model)
+		err = repo.Update(ctx, &model)
 
 		sCtx.Assert().Error(err)
-		sCtx.Assert().Equal(fmt.Errorf("sql error").Error(), err.Error())
+		sCtx.Assert().Equal(fmt.Errorf("обновление информации о пользователе: sql error").Error(), err.Error())
 	})
 }
