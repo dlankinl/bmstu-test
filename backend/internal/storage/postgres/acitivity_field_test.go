@@ -19,6 +19,7 @@ func (s *StorageActFieldSuite) Test_ActFieldStorageCreate(t provider.T) {
 	t.Tags("storage", "actField", "create")
 	t.Parallel()
 	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
+		// Arrange
 		model := utils.ActivityFieldMother{}.Default()
 		ctx := context.TODO()
 
@@ -34,8 +35,10 @@ func (s *StorageActFieldSuite) Test_ActFieldStorageCreate(t provider.T) {
 
 		sCtx.WithNewParameters("ctx", ctx, "model", model)
 
+		// Act
 		res, err := repo.Create(ctx, &model)
 
+		// Assert
 		sCtx.Assert().NoError(err)
 		sCtx.Assert().Equal(&model, res)
 	})
