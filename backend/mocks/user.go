@@ -41,20 +41,6 @@ func (m *MockIUserRepository) EXPECT() *MockIUserRepositoryMockRecorder {
 	return m.recorder
 }
 
-// Create mocks base method.
-func (m *MockIUserRepository) Create(arg0 context.Context, arg1 *domain.User) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Create indicates an expected call of Create.
-func (mr *MockIUserRepositoryMockRecorder) Create(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockIUserRepository)(nil).Create), arg0, arg1)
-}
-
 // DeleteById mocks base method.
 func (m *MockIUserRepository) DeleteById(arg0 context.Context, arg1 uuid.UUID) error {
 	m.ctrl.T.Helper()
@@ -150,20 +136,6 @@ func NewMockIUserService(ctrl *gomock.Controller) *MockIUserService {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockIUserService) EXPECT() *MockIUserServiceMockRecorder {
 	return m.recorder
-}
-
-// Create mocks base method.
-func (m *MockIUserService) Create(arg0 context.Context, arg1 *domain.User) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Create indicates an expected call of Create.
-func (mr *MockIUserServiceMockRecorder) Create(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockIUserService)(nil).Create), arg0, arg1)
 }
 
 // DeleteById mocks base method.

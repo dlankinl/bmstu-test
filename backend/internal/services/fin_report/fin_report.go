@@ -50,7 +50,7 @@ func (s *Service) Create(ctx context.Context, finReport *domain.FinancialReport)
 		return fmt.Errorf("нельзя добавить отчет за квартал, который еще не закончился")
 	}
 
-	err = s.finRepo.Create(ctx, finReport)
+	finReport, err = s.finRepo.Create(ctx, finReport)
 	if err != nil {
 		s.logger.Infof("%s: добавление финансового отчета: %v", prompt, err)
 		return fmt.Errorf("добавление финансового отчета: %w", err)

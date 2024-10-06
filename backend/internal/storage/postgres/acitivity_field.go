@@ -3,40 +3,68 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"ppo/domain"
-	"ppo/internal/config"
-
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"math"
+	"ppo/domain"
+	"ppo/internal/config"
+	"ppo/internal/storage"
+	"strings"
 )
 
 type ActivityFieldRepository struct {
-	db *pgxpool.Pool
+	db storage.DBConn
 }
 
-func NewActivityFieldRepository(db *pgxpool.Pool) domain.IActivityFieldRepository {
+func NewActivityFieldRepository(db storage.DBConn) domain.IActivityFieldRepository {
 	return &ActivityFieldRepository{
 		db: db,
 	}
 }
 
-func (r *ActivityFieldRepository) Create(ctx context.Context, data *domain.ActivityField) (err error) {
+func (r *ActivityFieldRepository) Create(ctx context.Context, data *domain.ActivityField) (res *domain.ActivityField, err error) {
 	query := `insert into ppo.activity_fields(name, description, cost) 
-	values ($1, $2, $3)`
+	values ($1, $2, $3) returning id`
 
-	_, err = r.db.Exec(
+	var id uuid.UUID
+	err = r.db.QueryRow(
 		ctx,
 		query,
 		data.Name,
 		data.Description,
 		data.Cost,
-	)
+	).Scan(&id)
 	if err != nil {
-		return fmt.Errorf("создание сферы деятельности: %w", err)
+		return nil, fmt.Errorf("создание сферы деятельности: %w", err)
 	}
+	data.ID = id
 
-	return nil
+	//var id uuid.UUID
+	//rows, err := r.db.Query(
+	//	ctx,
+	//	query,
+	//	data.Name,
+	//	data.Description,
+	//	data.Cost,
+	//)
+	//if err != nil {
+	//	return nil, fmt.Errorf("создание сферы деятельности: %w", err)
+	//}
+	//
+	//id, err = pgx.CollectOneRow(rows, func(row pgx.CollectableRow) (id uuid.UUID, err error) {
+	//	err = row.Scan(&id)
+	//	if err != nil {
+	//		return uuid.UUID{}, fmt.Errorf("cканирование возвращенного идентификатора: %w", err)
+	//	}
+	//
+	//	return id, err
+	//})
+	//if err != nil {
+	//	return nil, fmt.Errorf("collect one row: %w", err)
+	//}
+	//data.ID = id
+
+	return data, nil
 }
 
 func (r *ActivityFieldRepository) DeleteById(ctx context.Context, id uuid.UUID) (err error) {
@@ -55,21 +83,34 @@ func (r *ActivityFieldRepository) DeleteById(ctx context.Context, id uuid.UUID) 
 }
 
 func (r *ActivityFieldRepository) Update(ctx context.Context, data *domain.ActivityField) (err error) {
-	query := `
-			update ppo.activity_fields
-			set 
-			    name = $1,
-			    description = $2, 
-			    cost = $3
-			where id = $4`
+	query := `update ppo.activity_fields set `
+
+	args := make([]any, 0)
+	i := 1
+	equals := make([]string, 0)
+	if data.Name != "" {
+		equals = append(equals, fmt.Sprintf("name = $%d", i))
+		i++
+		args = append(args, data.Name)
+	}
+	if data.Description != "" {
+		equals = append(equals, fmt.Sprintf("description = $%d", i))
+		i++
+		args = append(args, data.Description)
+	}
+	if math.Abs(float64(data.Cost)) > 0 {
+		equals = append(equals, fmt.Sprintf("cost = $%d", i))
+		i++
+		args = append(args, data.Cost)
+	}
+	query += strings.Join(equals, ", ")
+	query += fmt.Sprintf(" where id = $%d", i)
+	args = append(args, data.ID)
 
 	_, err = r.db.Exec(
 		ctx,
 		query,
-		data.Name,
-		data.Description,
-		data.Cost,
-		data.ID,
+		args...,
 	)
 	if err != nil {
 		return fmt.Errorf("обновление информации о сфере деятельности: %w", err)
@@ -118,11 +159,11 @@ func (r *ActivityFieldRepository) GetMaxCost(ctx context.Context) (cost float32,
 
 func (r *ActivityFieldRepository) GetAll(ctx context.Context, page int, isPaginated bool) (fields []*domain.ActivityField, numPages int, err error) {
 	query :=
-		`select 
-    		id, 
-    		name,
-    		description,
-    		cost 
+		`select
+   		id,
+   		name,
+   		description,
+   		cost
 		from ppo.activity_fields`
 
 	var rows pgx.Rows

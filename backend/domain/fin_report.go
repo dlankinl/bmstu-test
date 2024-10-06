@@ -54,7 +54,7 @@ func (r *FinancialReportByPeriod) Profit() (sum float32) {
 
 //go:generate mockgen -source=fin_report.go -destination=../mocks/fin_report.go -package=mocks
 type IFinancialReportRepository interface {
-	Create(context.Context, *FinancialReport) error
+	Create(context.Context, *FinancialReport) (*FinancialReport, error)
 	GetById(context.Context, uuid.UUID) (*FinancialReport, error)
 	GetByCompany(context.Context, uuid.UUID, *Period) (*FinancialReportByPeriod, error)
 	Update(context.Context, *FinancialReport) error

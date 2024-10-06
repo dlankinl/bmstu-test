@@ -19,7 +19,6 @@ type User struct {
 
 //go:generate mockgen -source=user.go -destination=../mocks/user.go -package=mocks
 type IUserRepository interface {
-	Create(context.Context, *User) error
 	GetByUsername(context.Context, string) (*User, error)
 	GetById(context.Context, uuid.UUID) (*User, error)
 	GetAll(context.Context, int) ([]*User, int, error)
@@ -28,7 +27,6 @@ type IUserRepository interface {
 }
 
 type IUserService interface {
-	Create(context.Context, *User) error
 	GetByUsername(context.Context, string) (*User, error)
 	GetById(context.Context, uuid.UUID) (*User, error)
 	GetAll(context.Context, int) ([]*User, int, error)

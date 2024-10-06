@@ -102,7 +102,7 @@ func parsePeriodFromURL(r *http.Request) (period *domain.Period, err error) {
 
 	quarterStart, err := strconv.Atoi(quarterStartStr)
 	if err != nil {
-		return nil, fmt.Errorf("converting start quarter to int: %w, err")
+		return nil, fmt.Errorf("converting start quarter to int: %w", err)
 	}
 
 	quarterEndStr := chi.URLParam(r, "quarter-end")

@@ -45,7 +45,7 @@ func (s *Service) Create(ctx context.Context, company *domain.Company) (err erro
 		return fmt.Errorf("добавление компании (поиск сферы деятельности): %w", err)
 	}
 
-	err = s.companyRepo.Create(ctx, company)
+	company, err = s.companyRepo.Create(ctx, company)
 	if err != nil {
 		s.logger.Infof("%s: добавление компании: %v", prompt, err)
 		return fmt.Errorf("добавление компании: %w", err)

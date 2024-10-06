@@ -42,11 +42,12 @@ func (m *MockIActivityFieldRepository) EXPECT() *MockIActivityFieldRepositoryMoc
 }
 
 // Create mocks base method.
-func (m *MockIActivityFieldRepository) Create(arg0 context.Context, arg1 *domain.ActivityField) error {
+func (m *MockIActivityFieldRepository) Create(arg0 context.Context, arg1 *domain.ActivityField) (*domain.ActivityField, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*domain.ActivityField)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
@@ -209,21 +210,6 @@ func (m *MockIActivityFieldService) GetById(arg0 context.Context, arg1 uuid.UUID
 func (mr *MockIActivityFieldServiceMockRecorder) GetById(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetById", reflect.TypeOf((*MockIActivityFieldService)(nil).GetById), arg0, arg1)
-}
-
-// GetCostByCompanyId mocks base method.
-func (m *MockIActivityFieldService) GetCostByCompanyId(arg0 context.Context, arg1 uuid.UUID) (float32, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCostByCompanyId", arg0, arg1)
-	ret0, _ := ret[0].(float32)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetCostByCompanyId indicates an expected call of GetCostByCompanyId.
-func (mr *MockIActivityFieldServiceMockRecorder) GetCostByCompanyId(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCostByCompanyId", reflect.TypeOf((*MockIActivityFieldService)(nil).GetCostByCompanyId), arg0, arg1)
 }
 
 // GetMaxCost mocks base method.
