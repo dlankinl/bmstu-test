@@ -45,7 +45,7 @@ func (s *Service) Create(ctx context.Context, data *domain.ActivityField) (err e
 		return fmt.Errorf("вес сферы деятельности не может быть равен 0")
 	}
 
-	err = s.actFieldRepo.Create(ctx, data)
+	data, err = s.actFieldRepo.Create(ctx, data)
 	if err != nil {
 		s.logger.Infof("%s: создание сферы деятельности: %v", prompt, err)
 		return fmt.Errorf("создание сферы деятельности: %w", err)
@@ -88,25 +88,6 @@ func (s *Service) GetById(ctx context.Context, id uuid.UUID) (data *domain.Activ
 	}
 
 	return data, nil
-}
-
-func (s *Service) GetCostByCompanyId(ctx context.Context, companyId uuid.UUID) (cost float32, err error) {
-	prompt := "ActivityFieldGetCostByCompanyId"
-
-	company, err := s.compRepo.GetById(ctx, companyId)
-	if err != nil {
-		s.logger.Infof("%s: получение компании по id: %v", prompt, err)
-		return 0, fmt.Errorf("получение компании по id: %w", err)
-	}
-
-	field, err := s.actFieldRepo.GetById(ctx, company.ActivityFieldId)
-	if err != nil {
-		s.logger.Infof("%s: получение сферы деятельности по id: %v", prompt, err)
-		return 0, fmt.Errorf("получение сферы деятельности по id: %w", err)
-	}
-	cost = field.Cost
-
-	return cost, nil
 }
 
 func (s *Service) GetMaxCost(ctx context.Context) (maxCost float32, err error) {

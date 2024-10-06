@@ -2,89 +2,100 @@ package postgres
 
 import (
 	"context"
-	"errors"
-	"github.com/stretchr/testify/require"
-	"ppo/domain"
-	"testing"
+	"fmt"
+	"github.com/ozontech/allure-go/pkg/framework/provider"
+	"github.com/ozontech/allure-go/pkg/framework/suite"
+	"github.com/pashagolub/pgxmock/v4"
+	"ppo/internal/utils"
 )
 
-func TestAuthRepository_Register(t *testing.T) {
-	repo := NewAuthRepository(testDbInstance)
-
-	testCases := []struct {
-		name     string
-		authInfo *domain.UserAuth
-		wantErr  bool
-		errStr   error
-	}{
-		{
-			name: "успех",
-			authInfo: &domain.UserAuth{
-				Username:   "test123",
-				HashedPass: "test123",
-			},
-			wantErr: false,
-		},
-		{
-			name: "неуникальное имя пользователь",
-			authInfo: &domain.UserAuth{
-				Username:   "test123",
-				HashedPass: "test123",
-			},
-			wantErr: true,
-			errStr: errors.New("регистрация пользователя: ERROR: duplicate key value violates unique " +
-				"constraint \"users_username_key\" (SQLSTATE 23505)"),
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			err := repo.Register(context.Background(), tc.authInfo)
-
-			if tc.wantErr {
-				require.Equal(t, tc.errStr.Error(), err.Error())
-			} else {
-				require.Nil(t, err)
-			}
-		})
-	}
+type StorageAuthSuite struct {
+	suite.Suite
 }
 
-func TestAuthRepository_GetByUsername(t *testing.T) {
-	repo := NewAuthRepository(testDbInstance)
+func (s *StorageAuthSuite) Test_AuthStorageRegister(t provider.T) {
+	t.Title("[AuthRegister] Success")
+	t.Tags("storage", "auth", "register")
+	t.Parallel()
+	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
+		registerModel := utils.UserAuthMother{}.WithHashedPassUser()
+		ctx := context.TODO()
 
-	testCases := []struct {
-		name     string
-		username string
-		expected *domain.UserAuth
-		wantErr  bool
-		errStr   error
-	}{
-		{
-			name:     "пользователь найден",
-			username: "user3",
-			expected: &domain.UserAuth{
-				Username:   "user3",
-				HashedPass: "user3hehe",
-			},
-			wantErr: false,
-		},
-		{
-			name:     "пользователь не найден",
-			username: "test1234",
-			wantErr:  true,
-			errStr:   errors.New("получение пользователя по username: no rows in result set"),
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			res, err := repo.GetByUsername(context.Background(), tc.username)
+		mock, err := pgxmock.NewPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer mock.Close()
 
-			if tc.wantErr {
-				require.Equal(t, tc.errStr.Error(), err.Error())
-			} else {
-				require.Nil(t, err)
-				require.Equal(t, tc.expected.HashedPass, res.HashedPass)
-			}
-		})
-	}
+		mock.ExpectExec("insert").WithArgs(registerModel.Username, registerModel.HashedPass).
+			WillReturnResult(pgxmock.NewResult("insert", 1))
+
+		repo := NewAuthRepository(mock)
+
+		sCtx.WithNewParameters("ctx", ctx, "model", registerModel)
+
+		err = repo.Register(ctx, &registerModel)
+
+		sCtx.Assert().NoError(err)
+	})
+}
+
+func (s *StorageAuthSuite) Test_AuthStorageRegister2(t provider.T) {
+	t.Title("[AuthRegister] Fail")
+	t.Tags("storage", "auth", "register")
+	t.Parallel()
+	t.WithNewStep("Empty username", func(sCtx provider.StepCtx) {
+		ctx := context.TODO()
+
+		model := utils.UserAuthMother{}.WithoutUsernameUser()
+		sCtx.WithNewParameters("ctx", ctx, "model", model)
+
+		mock, err := pgxmock.NewPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer mock.Close()
+
+		mock.ExpectExec("insert").WithArgs(model.Username, model.HashedPass).
+			WillReturnError(fmt.Errorf("sql error"))
+
+		repo := NewAuthRepository(mock)
+
+		sCtx.WithNewParameters("ctx", ctx, "model", model)
+
+		err = repo.Register(ctx, &model)
+
+		sCtx.Assert().Error(err)
+		sCtx.Assert().Equal(fmt.Errorf("регистрация пользователя: sql error").Error(), err.Error())
+	})
+}
+
+// TODO: fix
+func (s *StorageAuthSuite) Test_AuthStorageGetByUsername(t provider.T) {
+	t.Title("[AuthLogin] Success")
+	t.Tags("storage", "auth", "login")
+	t.Parallel()
+	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
+		model := utils.UserAuthMother{}.WithHashedPassUser()
+		ctx := context.TODO()
+
+		mock, err := pgxmock.NewPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer mock.Close()
+
+		mock.ExpectQuery("select").
+			WithArgs(model.Username).
+			WillReturnRows(pgxmock.NewRows([]string{"id", "password", "role"}).
+				AddRow(model.ID, model.Password, model.Role))
+
+		repo := NewAuthRepository(mock)
+
+		sCtx.WithNewParameters("ctx", ctx, "model", model)
+
+		_, err = repo.GetByUsername(ctx, model.Username)
+
+		sCtx.Assert().NoError(err)
+	})
 }

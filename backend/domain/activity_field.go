@@ -15,7 +15,7 @@ type ActivityField struct {
 
 //go:generate mockgen -source=activity_field.go -destination=../mocks/activity_field.go -package=mocks
 type IActivityFieldRepository interface {
-	Create(context.Context, *ActivityField) error
+	Create(context.Context, *ActivityField) (*ActivityField, error)
 	DeleteById(context.Context, uuid.UUID) error
 	Update(context.Context, *ActivityField) error
 	GetById(context.Context, uuid.UUID) (*ActivityField, error)
@@ -28,7 +28,6 @@ type IActivityFieldService interface {
 	DeleteById(context.Context, uuid.UUID) error
 	Update(context.Context, *ActivityField) error
 	GetById(context.Context, uuid.UUID) (*ActivityField, error)
-	GetCostByCompanyId(context.Context, uuid.UUID) (float32, error)
 	GetMaxCost(context.Context) (float32, error)
 	GetAll(context.Context, int, bool) ([]*ActivityField, int, error)
 }

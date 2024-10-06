@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"ppo/internal/app"
 	"ppo/internal/config"
+	"ppo/internal/storage"
 	loggerPackage "ppo/pkg/logger"
 	"ppo/web"
 
@@ -22,7 +23,8 @@ import (
 
 var tokenAuth *jwtauth.JWTAuth
 
-func newConn(ctx context.Context, cfg *config.Database) (pool *pgxpool.Pool, err error) {
+// func newConn(ctx context.Context, cfg *config.Database) (pool *pgxpool.Pool, err error) {
+func newConn(ctx context.Context, cfg *config.Database) (pool storage.DBConn, err error) {
 	connStr := fmt.Sprintf("%s://%s:%s@%s:%s/%s", cfg.Driver, cfg.User, cfg.Password,
 		cfg.Host, cfg.Port, cfg.Name)
 

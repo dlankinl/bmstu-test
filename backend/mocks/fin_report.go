@@ -42,11 +42,12 @@ func (m *MockIFinancialReportRepository) EXPECT() *MockIFinancialReportRepositor
 }
 
 // Create mocks base method.
-func (m *MockIFinancialReportRepository) Create(arg0 context.Context, arg1 *domain.FinancialReport) error {
+func (m *MockIFinancialReportRepository) Create(arg0 context.Context, arg1 *domain.FinancialReport) (*domain.FinancialReport, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*domain.FinancialReport)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
