@@ -1,4 +1,4 @@
-package postgres
+package integration_tests
 
 import (
 	"context"
@@ -102,9 +102,7 @@ func migrateDb(dbAddr string) error {
 	}
 
 	relativePathToMigrationFiles := "./migrations"
-	//relativePathToMigrationFiles := "./test_data_2"
-	pathToMigrationFiles := filepath.Join(currentDir, "..", "..", "..", relativePathToMigrationFiles)
-	//pathToMigrationFiles := filepath.Join(currentDir, "..", "..", "..", "sql", relativePathToMigrationFiles)
+	pathToMigrationFiles := filepath.Join(currentDir, "..", "..", relativePathToMigrationFiles)
 
 	databaseURL := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", DbUser, DbPass, dbAddr, DbName)
 	m, err := migrate.New(fmt.Sprintf("file:%s", pathToMigrationFiles), databaseURL)
@@ -122,7 +120,14 @@ func migrateDb(dbAddr string) error {
 }
 
 func SeedTestData(db *pgxpool.Pool) error {
-	testDataDir := "../../../sql/test_data/"
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("получение текущей директории: %w", err)
+	}
+
+	relativePathToMigrationFiles := "./sql/test_data"
+	testDataDir := filepath.Join(currentDir, "..", "..", relativePathToMigrationFiles)
+
 	files, err := os.ReadDir(testDataDir)
 	if err != nil {
 		return fmt.Errorf("ошибка при чтении директории с тестовыми данными: %w", err)

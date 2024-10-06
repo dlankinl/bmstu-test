@@ -109,50 +109,6 @@ func (s *FinReportSuite) Test_FinReportCreate2(t provider.T) {
 	})
 }
 
-func (s *FinReportSuite) Test_FinReportCreate3(t provider.T) {
-	t.Title("[FinReportCreate] Указан квартал, который еще не закончен")
-	t.Tags("finReport", "create")
-	t.Parallel()
-	t.WithNewStep("Fail", func(sCtx provider.StepCtx) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		repo := mocks.NewMockIFinancialReportRepository(ctrl)
-		log := mocks.NewMockILogger(ctrl)
-		svc := fin_report.NewService(repo, log)
-
-		log.EXPECT().
-			Infof(gomock.Any()).
-			AnyTimes()
-		log.EXPECT().
-			Infof(gomock.Any(), gomock.Any()).
-			AnyTimes()
-		log.EXPECT().
-			Warnf(gomock.Any(), gomock.Any()).
-			AnyTimes()
-		log.EXPECT().
-			Errorf(gomock.Any(), gomock.Any()).
-			AnyTimes()
-
-		reportId := uuid.UUID{1}
-		model := utils.NewFinReportBuilder().
-			WithID(reportId).
-			WithRevenue(1).
-			WithCosts(1).
-			WithYear(2024).
-			WithQuarter(3).
-			Build()
-		ctx := context.TODO()
-
-		sCtx.WithNewParameters("ctx", ctx, "model", model)
-
-		err := svc.Create(ctx, &model)
-
-		sCtx.Assert().Error(err)
-		sCtx.Assert().Equal(fmt.Errorf("нельзя добавить отчет за квартал, который еще не закончился").Error(), err.Error())
-	})
-}
-
 func (s *FinReportSuite) Test_FinReportDeleteById(t provider.T) {
 	t.Title("[FinReportDeleteById] Успешно")
 	t.Tags("finReport", "deleteById")

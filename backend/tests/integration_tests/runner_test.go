@@ -1,4 +1,4 @@
-package postgres
+package integration_tests
 
 import (
 	"github.com/ozontech/allure-go/pkg/framework/runner"

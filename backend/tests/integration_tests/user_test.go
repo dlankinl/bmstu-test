@@ -1,4 +1,4 @@
-package postgres
+package integration_tests
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/ozontech/allure-go/pkg/framework/provider"
 	"github.com/ozontech/allure-go/pkg/framework/suite"
 	"ppo/domain"
+	"ppo/internal/storage/postgres"
 	"ppo/internal/utils"
 	"time"
 )
@@ -19,7 +20,7 @@ type StorageUserSuite struct {
 
 func (s *StorageUserSuite) BeforeAll(t provider.T) {
 	t.Title("init test repository")
-	s.repo = NewUserRepository(testDbInstance)
+	s.repo = postgres.NewUserRepository(TestDbInstance)
 	t.Tags("fixture", "finReport")
 }
 

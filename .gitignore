@@ -8,5 +8,6 @@ Thumbs.db
 */logs
 /utils
 *.png
-/backend/allure-results
 */postgres
+**/allure-reports
+**/allure-results
