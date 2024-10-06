@@ -421,7 +421,3 @@ func (s *ActFieldSuite) Test_ActFieldUpdate2(t provider.T) {
 		sCtx.Assert().Equal(fmt.Errorf("обновление информации о cфере деятельности: sql error").Error(), err.Error())
 	})
 }
-
-//func TestSuiteRunner(t *testing.T) {
-//	suite.RunSuite(t, new(ActFieldSuite))
-//}

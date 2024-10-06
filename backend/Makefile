@@ -3,11 +3,11 @@ go-test-command:
 
 test:
 	rm -rf allure-results
-	export ALLURE_OUTPUT_PATH="/Users/dmitry/Desktop/bmstu/7sem/bmstu-test/backend" && go test ./... --race --parallel 6
+	export ALLURE_OUTPUT_PATH="/Users/dmitry/Desktop/bmstu/7sem/bmstu-test/backend" && go test ./... --race --parallel 8
 	cp environment.properties allure-results
 
 allure:
-	cp -R allure-reports/history allure-results
+	[ -d allure-reports ] && cp -rf allure-reports/history allure-results || :
 	rm -rf allure-reports
 	allure generate allure-results -o allure-reports
 	allure serve allure-results -p 4000

@@ -6,7 +6,6 @@
 *.drawio
 Thumbs.db
 */logs
-/utils
 *.png
 */postgres
 **/allure-reports

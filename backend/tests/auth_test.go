@@ -195,7 +195,3 @@ func (s *AuthSuite) Test_AuthLogin(t provider.T) {
 		sCtx.Assert().Equal(fmt.Errorf("должен быть указан пароль"), err)
 	})
 }
-
-//func TestSuiteRunner(t *testing.T) {
-//	suite.RunSuite(t, new(AuthSuite))
-//}

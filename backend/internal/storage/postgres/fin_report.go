@@ -6,17 +6,17 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"math"
 	"ppo/domain"
+	"ppo/internal/storage"
 	"strings"
 )
 
 type FinReportRepository struct {
-	db *pgxpool.Pool
+	db storage.DBConn
 }
 
-func NewFinReportRepository(db *pgxpool.Pool) domain.IFinancialReportRepository {
+func NewFinReportRepository(db storage.DBConn) domain.IFinancialReportRepository {
 	return &FinReportRepository{
 		db: db,
 	}

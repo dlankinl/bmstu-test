@@ -6,9 +6,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/ozontech/allure-go/pkg/framework/provider"
 	"github.com/ozontech/allure-go/pkg/framework/suite"
+	"github.com/pashagolub/pgxmock/v4"
 	"go.uber.org/mock/gomock"
 	"ppo/domain"
 	"ppo/internal/services/company"
+	"ppo/internal/storage/postgres"
 	"ppo/internal/utils"
 	"ppo/mocks"
 )
@@ -109,6 +111,54 @@ func (s *CompanySuite) Test_CompanyCreate2(t provider.T) {
 	})
 }
 
+func (s *CompanySuite) Test_ClassicCompanyCreate(t provider.T) {
+	t.Title("[ClassicCompanyCreate] Пустое название компании")
+	t.Tags("classic", "company", "create")
+	t.Parallel()
+	t.WithNewStep("Fail", func(sCtx provider.StepCtx) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mock, err := pgxmock.NewPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer mock.Close()
+
+		repo := postgres.NewActivityFieldRepository(mock)
+		compRepo := postgres.NewCompanyRepository(mock)
+		log := mocks.NewMockILogger(ctrl)
+		svc := company.NewService(compRepo, repo, log)
+
+		log.EXPECT().
+			Infof(gomock.Any()).
+			AnyTimes()
+		log.EXPECT().
+			Infof(gomock.Any(), gomock.Any()).
+			AnyTimes()
+		log.EXPECT().
+			Warnf(gomock.Any(), gomock.Any()).
+			AnyTimes()
+		log.EXPECT().
+			Errorf(gomock.Any(), gomock.Any()).
+			AnyTimes()
+
+		model := utils.NewCompanyBuilder().
+			WithCity("ccc").
+			WithActivityField(uuid.UUID{0}).
+			WithOwner(uuid.UUID{0}).
+			Build()
+		ctx := context.TODO()
+
+		sCtx.WithNewParameters("ctx", ctx, "model", model)
+
+		err = svc.Create(ctx, &model)
+
+		sCtx.Assert().Error(err)
+		sCtx.Assert().Equal(fmt.Errorf("должно быть указано название компании").Error(), err.Error())
+	})
+}
+
 func (s *CompanySuite) Test_CompanyDeleteById(t provider.T) {
 	t.Title("[CompanyDeleteById] Успешно")
 	t.Tags("company", "deleteById")
@@ -149,6 +199,100 @@ func (s *CompanySuite) Test_CompanyDeleteById(t provider.T) {
 		err := svc.DeleteById(ctx, id)
 
 		sCtx.Assert().NoError(err)
+	})
+}
+
+func (s *CompanySuite) Test_ClassicCompanyDeleteById(t provider.T) {
+	t.Title("[ClassicCompanyDeleteById] Успех")
+	t.Tags("classic", "company", "deleteById")
+	t.Parallel()
+	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mock, err := pgxmock.NewPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer mock.Close()
+
+		repo := postgres.NewActivityFieldRepository(mock)
+		compRepo := postgres.NewCompanyRepository(mock)
+		log := mocks.NewMockILogger(ctrl)
+		svc := company.NewService(compRepo, repo, log)
+
+		log.EXPECT().
+			Infof(gomock.Any()).
+			AnyTimes()
+		log.EXPECT().
+			Infof(gomock.Any(), gomock.Any()).
+			AnyTimes()
+		log.EXPECT().
+			Warnf(gomock.Any(), gomock.Any()).
+			AnyTimes()
+		log.EXPECT().
+			Errorf(gomock.Any(), gomock.Any()).
+			AnyTimes()
+
+		id := uuid.UUID{0}
+		ctx := context.TODO()
+		mock.ExpectBegin()
+		mock.ExpectExec("delete").WithArgs(id).WillReturnResult(pgxmock.NewResult("delete", 1))
+		mock.ExpectExec("delete").WithArgs(id).WillReturnResult(pgxmock.NewResult("delete", 1))
+		mock.ExpectCommit()
+
+		sCtx.WithNewParameters("ctx", ctx, "model", id)
+
+		err = svc.DeleteById(ctx, id)
+
+		sCtx.Assert().NoError(err)
+	})
+}
+
+func (s *CompanySuite) Test_ClassicCompanyDeleteById2(t provider.T) {
+	t.Title("[ClassicCompanyDeleteById] Ошибка выполнения запроса в репозитории")
+	t.Tags("classic", "company", "deleteById")
+	t.Parallel()
+	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mock, err := pgxmock.NewPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer mock.Close()
+
+		repo := postgres.NewActivityFieldRepository(mock)
+		compRepo := postgres.NewCompanyRepository(mock)
+		log := mocks.NewMockILogger(ctrl)
+		svc := company.NewService(compRepo, repo, log)
+
+		log.EXPECT().
+			Infof(gomock.Any()).
+			AnyTimes()
+		log.EXPECT().
+			Infof(gomock.Any(), gomock.Any()).
+			AnyTimes()
+		log.EXPECT().
+			Warnf(gomock.Any(), gomock.Any()).
+			AnyTimes()
+		log.EXPECT().
+			Errorf(gomock.Any(), gomock.Any()).
+			AnyTimes()
+
+		id := uuid.UUID{0}
+		ctx := context.TODO()
+		mock.ExpectBegin()
+		mock.ExpectExec("delete").WithArgs(id).WillReturnError(fmt.Errorf("sql error"))
+		mock.ExpectRollback()
+
+		sCtx.WithNewParameters("ctx", ctx, "model", id)
+
+		err = svc.DeleteById(ctx, id)
+
+		sCtx.Assert().Error(err)
+		sCtx.Assert().Equal(fmt.Errorf("удаление компании по id: удаление компании по id: sql error").Error(), err.Error())
 	})
 }
 
@@ -622,7 +766,3 @@ func (s *CompanySuite) Test_CompanyUpdate2(t provider.T) {
 		sCtx.Assert().Equal(fmt.Errorf("обновление информации о компании: sql error").Error(), err.Error())
 	})
 }
-
-//func TestSuiteRunner(t *testing.T) {
-//	suite.RunSuite(t, new(CompanySuite))
-//}

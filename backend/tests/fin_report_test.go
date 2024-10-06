@@ -41,7 +41,7 @@ func (s *FinReportSuite) Test_FinReportCreate(t provider.T) {
 			Errorf(gomock.Any(), gomock.Any()).
 			AnyTimes()
 
-		reportId := uuid.UUID{1}
+		reportId := uuid.UUID{10}
 		model := utils.NewFinReportBuilder().
 			WithID(reportId).
 			WithRevenue(1).
@@ -90,7 +90,7 @@ func (s *FinReportSuite) Test_FinReportCreate2(t provider.T) {
 			Errorf(gomock.Any(), gomock.Any()).
 			AnyTimes()
 
-		reportId := uuid.UUID{1}
+		reportId := uuid.UUID{20}
 		model := utils.NewFinReportBuilder().
 			WithID(reportId).
 			WithRevenue(-1).

@@ -8,11 +8,10 @@ import (
 	"ppo/internal/services/company"
 	"ppo/internal/services/fin_report"
 	"ppo/internal/services/user"
+	"ppo/internal/storage"
 	"ppo/internal/storage/postgres"
 	"ppo/pkg/base"
 	"ppo/pkg/logger"
-
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type App struct {
@@ -25,7 +24,7 @@ type App struct {
 	Config      config.Config
 }
 
-func NewApp(db *pgxpool.Pool, cfg *config.Config, log logger.ILogger) *App {
+func NewApp(db storage.DBConn, cfg *config.Config, log logger.ILogger) *App {
 	authRepo := postgres.NewAuthRepository(db)
 	userRepo := postgres.NewUserRepository(db)
 	finRepo := postgres.NewFinReportRepository(db)

@@ -6,9 +6,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/ozontech/allure-go/pkg/framework/provider"
 	"github.com/ozontech/allure-go/pkg/framework/suite"
+	"github.com/pashagolub/pgxmock/v4"
 	"go.uber.org/mock/gomock"
 	"ppo/domain"
 	"ppo/internal/services/user"
+	"ppo/internal/storage/postgres"
 	"ppo/internal/utils"
 	"ppo/mocks"
 	"time"
@@ -413,6 +415,106 @@ func (s *UserSuite) Test_UserUpdate2(t provider.T) {
 	})
 }
 
-//func TestSuiteRunner(t *testing.T) {
-//	suite.RunSuite(t, new(UserSuite))
-//}
+func (s *UserSuite) Test_ClassicUserUpdate(t provider.T) {
+	t.Title("[ClassicUserUpdate] Успех")
+	t.Tags("classic", "user", "update")
+	t.Parallel()
+	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mock, err := pgxmock.NewPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer mock.Close()
+
+		uRepo := postgres.NewUserRepository(mock)
+		cRepo := postgres.NewCompanyRepository(mock)
+		aRepo := mocks.NewMockIActivityFieldRepository(ctrl)
+		log := mocks.NewMockILogger(ctrl)
+		svc := user.NewService(uRepo, cRepo, aRepo, log)
+
+		log.EXPECT().
+			Infof(gomock.Any()).
+			AnyTimes()
+		log.EXPECT().
+			Infof(gomock.Any(), gomock.Any()).
+			AnyTimes()
+		log.EXPECT().
+			Warnf(gomock.Any(), gomock.Any()).
+			AnyTimes()
+		log.EXPECT().
+			Errorf(gomock.Any(), gomock.Any()).
+			AnyTimes()
+
+		ctx := context.TODO()
+		uId := uuid.UUID{1}
+		model := utils.NewUserBuilder().
+			WithId(uId).
+			WithCity("a").
+			WithRole("admin").
+			Build()
+
+		mock.ExpectExec("update").WithArgs(model.City, model.Role, model.ID).
+			WillReturnResult(pgxmock.NewResult("update", 1))
+
+		sCtx.WithNewParameters("ctx", ctx, "model", model)
+
+		err = svc.Update(ctx, &model)
+
+		sCtx.Assert().NoError(err)
+	})
+}
+
+func (s *UserSuite) Test_ClassicUserUpdate2(t provider.T) {
+	t.Title("[ClassicUserUpdate] Ошибка выполнения запроса в репозитории")
+	t.Tags("classic", "user", "update")
+	t.Parallel()
+	t.WithNewStep("Fail", func(sCtx provider.StepCtx) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mock, err := pgxmock.NewPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer mock.Close()
+
+		uRepo := postgres.NewUserRepository(mock)
+		cRepo := postgres.NewCompanyRepository(mock)
+		aRepo := mocks.NewMockIActivityFieldRepository(ctrl)
+		log := mocks.NewMockILogger(ctrl)
+		svc := user.NewService(uRepo, cRepo, aRepo, log)
+
+		log.EXPECT().
+			Infof(gomock.Any()).
+			AnyTimes()
+		log.EXPECT().
+			Infof(gomock.Any(), gomock.Any()).
+			AnyTimes()
+		log.EXPECT().
+			Warnf(gomock.Any(), gomock.Any()).
+			AnyTimes()
+		log.EXPECT().
+			Errorf(gomock.Any(), gomock.Any()).
+			AnyTimes()
+
+		ctx := context.TODO()
+		uId := uuid.UUID{1}
+		model := utils.NewUserBuilder().
+			WithId(uId).
+			WithCity("a").
+			WithRole("admin").
+			Build()
+
+		mock.ExpectExec("update").WithArgs(model.City, model.Role, model.ID).WillReturnError(fmt.Errorf("sql error"))
+
+		sCtx.WithNewParameters("ctx", ctx, "model", model)
+
+		err = svc.Update(ctx, &model)
+
+		sCtx.Assert().Error(err)
+		sCtx.Assert().Equal(fmt.Errorf("обновление информации о пользователе: обновление информации о пользователе: sql error").Error(), err.Error())
+	})
+}

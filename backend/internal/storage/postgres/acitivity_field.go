@@ -3,21 +3,20 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"math"
 	"ppo/domain"
 	"ppo/internal/config"
+	"ppo/internal/storage"
 	"strings"
-
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type ActivityFieldRepository struct {
-	db *pgxpool.Pool
+	db storage.DBConn
 }
 
-func NewActivityFieldRepository(db *pgxpool.Pool) domain.IActivityFieldRepository {
+func NewActivityFieldRepository(db storage.DBConn) domain.IActivityFieldRepository {
 	return &ActivityFieldRepository{
 		db: db,
 	}
@@ -39,6 +38,31 @@ func (r *ActivityFieldRepository) Create(ctx context.Context, data *domain.Activ
 		return nil, fmt.Errorf("создание сферы деятельности: %w", err)
 	}
 	data.ID = id
+
+	//var id uuid.UUID
+	//rows, err := r.db.Query(
+	//	ctx,
+	//	query,
+	//	data.Name,
+	//	data.Description,
+	//	data.Cost,
+	//)
+	//if err != nil {
+	//	return nil, fmt.Errorf("создание сферы деятельности: %w", err)
+	//}
+	//
+	//id, err = pgx.CollectOneRow(rows, func(row pgx.CollectableRow) (id uuid.UUID, err error) {
+	//	err = row.Scan(&id)
+	//	if err != nil {
+	//		return uuid.UUID{}, fmt.Errorf("cканирование возвращенного идентификатора: %w", err)
+	//	}
+	//
+	//	return id, err
+	//})
+	//if err != nil {
+	//	return nil, fmt.Errorf("collect one row: %w", err)
+	//}
+	//data.ID = id
 
 	return data, nil
 }
@@ -135,11 +159,11 @@ func (r *ActivityFieldRepository) GetMaxCost(ctx context.Context) (cost float32,
 
 func (r *ActivityFieldRepository) GetAll(ctx context.Context, page int, isPaginated bool) (fields []*domain.ActivityField, numPages int, err error) {
 	query :=
-		`select 
-    		id, 
-    		name,
-    		description,
-    		cost 
+		`select
+   		id,
+   		name,
+   		description,
+   		cost
 		from ppo.activity_fields`
 
 	var rows pgx.Rows
