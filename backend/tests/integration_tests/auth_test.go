@@ -12,20 +12,20 @@ import (
 	"ppo/internal/utils"
 )
 
-type StorageAuthSuite struct {
+type ITAuthSuite struct {
 	suite.Suite
 	repo domain.IAuthRepository
 }
 
-func (s *StorageAuthSuite) BeforeAll(t provider.T) {
+func (s *ITAuthSuite) BeforeAll(t provider.T) {
 	t.Title("init test repository")
 	s.repo = postgres.NewAuthRepository(TestDbInstance)
 	t.Tags("fixture", "auth")
 }
 
-func (s *StorageAuthSuite) Test_AuthStorage_Register(t provider.T) {
+func (s *ITAuthSuite) Test_AuthStorage_Register(t provider.T) {
 	t.Title("[Register] Успех")
-	t.Tags("storage", "postgres", "auth")
+	t.Tags("integration test", "postgres", "auth")
 	t.Parallel()
 	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()
@@ -42,9 +42,9 @@ func (s *StorageAuthSuite) Test_AuthStorage_Register(t provider.T) {
 	})
 }
 
-func (s *StorageAuthSuite) Test_AuthStorage_Register2(t provider.T) {
+func (s *ITAuthSuite) Test_AuthStorage_Register2(t provider.T) {
 	t.Title("[Register] Неуникальное имя пользователя")
-	t.Tags("storage", "postgres", "auth")
+	t.Tags("integration test", "postgres", "auth")
 	t.Parallel()
 	t.WithNewStep("Fail", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()
@@ -62,9 +62,9 @@ func (s *StorageAuthSuite) Test_AuthStorage_Register2(t provider.T) {
 	})
 }
 
-func (s *StorageAuthSuite) Test_AuthStorage_GetByUsername(t provider.T) {
+func (s *ITAuthSuite) Test_AuthStorage_GetByUsername(t provider.T) {
 	t.Title("[GetByUsername] Успех")
-	t.Tags("storage", "postgres", "auth")
+	t.Tags("integration test", "postgres", "auth")
 	t.Parallel()
 	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()
@@ -73,6 +73,7 @@ func (s *StorageAuthSuite) Test_AuthStorage_GetByUsername(t provider.T) {
 		authInfo := utils.NewUserAuthBuilder().
 			WithHashedPass("user3hehe").
 			WithID(id).
+			WithRole("admin").
 			Build()
 		username := "user3"
 
@@ -84,9 +85,9 @@ func (s *StorageAuthSuite) Test_AuthStorage_GetByUsername(t provider.T) {
 	})
 }
 
-func (s *StorageAuthSuite) Test_AuthStorage_GetByUsername2(t provider.T) {
+func (s *ITAuthSuite) Test_AuthStorage_GetByUsername2(t provider.T) {
 	t.Title("[GetByUsername] Не найден")
-	t.Tags("storage", "postgres", "auth")
+	t.Tags("integration test", "postgres", "auth")
 	t.Parallel()
 	t.WithNewStep("Fail", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()

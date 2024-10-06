@@ -12,20 +12,20 @@ import (
 	"ppo/internal/utils"
 )
 
-type StorageCompanySuite struct {
+type ITCompanySuite struct {
 	suite.Suite
 	repo domain.ICompanyRepository
 }
 
-func (s *StorageCompanySuite) BeforeAll(t provider.T) {
+func (s *ITCompanySuite) BeforeAll(t provider.T) {
 	t.Title("init test repository")
 	s.repo = postgres.NewCompanyRepository(TestDbInstance)
 	t.Tags("fixture", "finReport")
 }
 
-func (s *StorageCompanySuite) Test_CompanyStorage_Create(t provider.T) {
+func (s *ITCompanySuite) Test_CompanyStorage_Create(t provider.T) {
 	t.Title("[Create] Успех")
-	t.Tags("storage", "postgres", "company")
+	t.Tags("integration test", "postgres", "company")
 	t.Parallel()
 	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()
@@ -49,9 +49,9 @@ func (s *StorageCompanySuite) Test_CompanyStorage_Create(t provider.T) {
 	})
 }
 
-func (s *StorageCompanySuite) Test_CompanyStorage_Create2(t provider.T) {
+func (s *ITCompanySuite) Test_CompanyStorage_Create2(t provider.T) {
 	t.Title("[Create] Несуществующий пользователь")
-	t.Tags("storage", "postgres", "company")
+	t.Tags("integration test", "postgres", "company")
 	t.Parallel()
 	t.WithNewStep("Fail", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()
@@ -73,9 +73,9 @@ func (s *StorageCompanySuite) Test_CompanyStorage_Create2(t provider.T) {
 	})
 }
 
-func (s *StorageCompanySuite) Test_CompanyStorage_GetById(t provider.T) {
+func (s *ITCompanySuite) Test_CompanyStorage_GetById(t provider.T) {
 	t.Title("[GetById] Успех")
-	t.Tags("storage", "postgres", "company")
+	t.Tags("integration test", "postgres", "company")
 	t.Parallel()
 	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()
@@ -99,9 +99,9 @@ func (s *StorageCompanySuite) Test_CompanyStorage_GetById(t provider.T) {
 	})
 }
 
-func (s *StorageCompanySuite) Test_CompanyStorage_GetById2(t provider.T) {
+func (s *ITCompanySuite) Test_CompanyStorage_GetById2(t provider.T) {
 	t.Title("[GetById] Несуществующая компания")
-	t.Tags("storage", "postgres", "company")
+	t.Tags("integration test", "postgres", "company")
 	t.Parallel()
 	t.WithNewStep("Fail", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()
@@ -116,9 +116,9 @@ func (s *StorageCompanySuite) Test_CompanyStorage_GetById2(t provider.T) {
 	})
 }
 
-func (s *StorageCompanySuite) Test_CompanyStorage_GetByOwnerId(t provider.T) {
+func (s *ITCompanySuite) Test_CompanyStorage_GetByOwnerId(t provider.T) {
 	t.Title("[GetByOwnerId] Успех")
-	t.Tags("storage", "postgres", "company")
+	t.Tags("integration test", "postgres", "company")
 	t.Parallel()
 	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()
@@ -145,9 +145,9 @@ func (s *StorageCompanySuite) Test_CompanyStorage_GetByOwnerId(t provider.T) {
 	})
 }
 
-func (s *StorageCompanySuite) Test_CompanyStorage_Update(t provider.T) {
+func (s *ITCompanySuite) Test_CompanyStorage_Update(t provider.T) {
 	t.Title("[Update] Успех")
-	t.Tags("storage", "postgres", "company")
+	t.Tags("integration test", "postgres", "company")
 	t.Parallel()
 	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()
@@ -165,32 +165,3 @@ func (s *StorageCompanySuite) Test_CompanyStorage_Update(t provider.T) {
 		sCtx.Assert().NoError(err)
 	})
 }
-
-//func (s *StorageCompanySuite) Test_CompanyStorage_GetAll(t provider.T) {
-//	t.Title("[GetByOwnerId] Успех")
-//	t.Tags("storage", "postgres", "company")
-//	t.Parallel()
-//	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
-//		ctx := context.TODO()
-//
-//		compId, _ := uuid.Parse("fa406cca-27d6-446e-8cfd-b1a71ed680a0")
-//		ownerId, _ := uuid.Parse("bc3ab9bf-6a26-4212-941d-05a985fc0978")
-//		actFieldId, _ := uuid.Parse("f80426b8-27e7-4bfa-8721-23075f125165")
-//
-//		expComp1 := utils.NewCompanyBuilder().
-//			WithID(compId).
-//			WithName("Company1").
-//			WithCity("Moscow").
-//			WithActivityField(actFieldId).
-//			WithOwner(ownerId).
-//			Build()
-//
-//		expectedCompanies := []*domain.Company{&expComp1}
-//
-//		sCtx.WithNewParameters("ctx", ctx, "model", ownerId)
-//		companies, err := s.repo.GetAll(ctx, 0)
-//
-//		sCtx.Assert().NoError(err)
-//		sCtx.Assert().Equal(expectedCompanies, companies)
-//	})
-//}

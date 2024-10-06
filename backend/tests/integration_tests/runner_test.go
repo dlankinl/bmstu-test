@@ -12,11 +12,11 @@ func TestRunner(t *testing.T) {
 
 	wg := &sync.WaitGroup{}
 	suits := []runner.TestSuite{
-		&StorageCompanySuite{},
-		&StorageAuthSuite{},
-		&StorageFinReportSuite{},
-		&StorageActFieldSuite{},
-		&StorageUserSuite{},
+		&ITCompanySuite{},
+		&ITAuthSuite{},
+		&ITFinReportSuite{},
+		&ITActFieldSuite{},
+		&ITUserSuite{},
 	}
 	wg.Add(len(suits))
 

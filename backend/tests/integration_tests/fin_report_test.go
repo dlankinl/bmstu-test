@@ -12,20 +12,20 @@ import (
 	"ppo/internal/utils"
 )
 
-type StorageFinReportSuite struct {
+type ITFinReportSuite struct {
 	suite.Suite
 	repo domain.IFinancialReportRepository
 }
 
-func (s *StorageFinReportSuite) BeforeAll(t provider.T) {
+func (s *ITFinReportSuite) BeforeAll(t provider.T) {
 	t.Title("init test repository")
 	s.repo = postgres.NewFinReportRepository(TestDbInstance)
 	t.Tags("fixture", "finReport")
 }
 
-func (s *StorageFinReportSuite) Test_FinReportStorage_Create(t provider.T) {
+func (s *ITFinReportSuite) Test_FinReportStorage_Create(t provider.T) {
 	t.Title("[Create] Успех")
-	t.Tags("storage", "postgres", "fin_report")
+	t.Tags("integration test", "postgres", "fin_report")
 	t.Parallel()
 	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()
@@ -49,9 +49,9 @@ func (s *StorageFinReportSuite) Test_FinReportStorage_Create(t provider.T) {
 	})
 }
 
-func (s *StorageFinReportSuite) Test_FinReportStorage_Create2(t provider.T) {
+func (s *ITFinReportSuite) Test_FinReportStorage_Create2(t provider.T) {
 	t.Title("[Create] Несуществующий id компании")
-	t.Tags("storage", "postgres", "fin_report")
+	t.Tags("integration test", "postgres", "fin_report")
 	t.Parallel()
 	t.WithNewStep("Fail", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()
@@ -73,9 +73,9 @@ func (s *StorageFinReportSuite) Test_FinReportStorage_Create2(t provider.T) {
 	})
 }
 
-func (s *StorageFinReportSuite) Test_FinReportStorage_GetById(t provider.T) {
+func (s *ITFinReportSuite) Test_FinReportStorage_GetById(t provider.T) {
 	t.Title("[GetById] Успех")
-	t.Tags("storage", "postgres", "fin_report")
+	t.Tags("integration test", "postgres", "fin_report")
 	t.Parallel()
 	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()
@@ -99,9 +99,9 @@ func (s *StorageFinReportSuite) Test_FinReportStorage_GetById(t provider.T) {
 	})
 }
 
-func (s *StorageFinReportSuite) Test_FinReportStorage_GetById2(t provider.T) {
+func (s *ITFinReportSuite) Test_FinReportStorage_GetById2(t provider.T) {
 	t.Title("[GetById] Несуществующий отчет")
-	t.Tags("storage", "postgres", "fin_report")
+	t.Tags("integration test", "postgres", "fin_report")
 	t.Parallel()
 	t.WithNewStep("Fail", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()
@@ -116,9 +116,9 @@ func (s *StorageFinReportSuite) Test_FinReportStorage_GetById2(t provider.T) {
 	})
 }
 
-func (s *StorageFinReportSuite) Test_FinReportStorage_DeleteById(t provider.T) {
+func (s *ITFinReportSuite) Test_FinReportStorage_DeleteById(t provider.T) {
 	t.Title("[GetById] Успех")
-	t.Tags("storage", "postgres", "fin_report")
+	t.Tags("integration test", "postgres", "fin_report")
 	t.Parallel()
 	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()
@@ -136,9 +136,9 @@ func (s *StorageFinReportSuite) Test_FinReportStorage_DeleteById(t provider.T) {
 	})
 }
 
-func (s *StorageFinReportSuite) Test_FinReportStorage_GetByCompany(t provider.T) {
+func (s *ITFinReportSuite) Test_FinReportStorage_GetByCompany(t provider.T) {
 	t.Title("[GetByCompany] Успех")
-	t.Tags("storage", "postgres", "fin_report")
+	t.Tags("integration test", "postgres", "fin_report")
 	t.Parallel()
 	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()
@@ -175,9 +175,9 @@ func (s *StorageFinReportSuite) Test_FinReportStorage_GetByCompany(t provider.T)
 	})
 }
 
-func (s *StorageFinReportSuite) Test_FinReportStorage_Update(t provider.T) {
+func (s *ITFinReportSuite) Test_FinReportStorage_Update(t provider.T) {
 	t.Title("[Update] Успех")
-	t.Tags("storage", "postgres", "fin_report")
+	t.Tags("integration test", "postgres", "fin_report")
 	t.Parallel()
 	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()

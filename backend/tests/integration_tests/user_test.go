@@ -13,20 +13,20 @@ import (
 	"time"
 )
 
-type StorageUserSuite struct {
+type ITUserSuite struct {
 	suite.Suite
 	repo domain.IUserRepository
 }
 
-func (s *StorageUserSuite) BeforeAll(t provider.T) {
+func (s *ITUserSuite) BeforeAll(t provider.T) {
 	t.Title("init test repository")
 	s.repo = postgres.NewUserRepository(TestDbInstance)
 	t.Tags("fixture", "finReport")
 }
 
-func (s *StorageUserSuite) Test_UserStorage_GetById(t provider.T) {
+func (s *ITUserSuite) Test_UserStorage_GetById(t provider.T) {
 	t.Title("[GetById] Успех")
-	t.Tags("storage", "postgres", "user")
+	t.Tags("integration test", "postgres", "user")
 	t.Parallel()
 	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()
@@ -39,6 +39,7 @@ func (s *StorageUserSuite) Test_UserStorage_GetById(t provider.T) {
 			WithBirthday(time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)).
 			WithGender("m").
 			WithCity("Moscow").
+			WithRole("user").
 			Build()
 
 		sCtx.WithNewParameters("ctx", ctx, "model", userId)
@@ -50,9 +51,9 @@ func (s *StorageUserSuite) Test_UserStorage_GetById(t provider.T) {
 	})
 }
 
-func (s *StorageUserSuite) Test_UserStorage_GetById2(t provider.T) {
+func (s *ITUserSuite) Test_UserStorage_GetById2(t provider.T) {
 	t.Title("[GetById] Несуществующий пользователь")
-	t.Tags("storage", "postgres", "user")
+	t.Tags("integration test", "postgres", "user")
 	t.Parallel()
 	t.WithNewStep("Fail", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()
@@ -68,9 +69,9 @@ func (s *StorageUserSuite) Test_UserStorage_GetById2(t provider.T) {
 	})
 }
 
-func (s *StorageUserSuite) Test_UserStorage_Update(t provider.T) {
+func (s *ITUserSuite) Test_UserStorage_Update(t provider.T) {
 	t.Title("[Update] Успех")
-	t.Tags("storage", "postgres", "user")
+	t.Tags("integration test", "postgres", "user")
 	t.Parallel()
 	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()
@@ -93,9 +94,9 @@ func (s *StorageUserSuite) Test_UserStorage_Update(t provider.T) {
 	})
 }
 
-func (s *StorageUserSuite) Test_UserStorage_DeleteById(t provider.T) {
+func (s *ITUserSuite) Test_UserStorage_DeleteById(t provider.T) {
 	t.Title("[DeleteById] Успех")
-	t.Tags("storage", "postgres", "user")
+	t.Tags("integration test", "postgres", "user")
 	t.Parallel()
 	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()
@@ -114,9 +115,9 @@ func (s *StorageUserSuite) Test_UserStorage_DeleteById(t provider.T) {
 	})
 }
 
-func (s *StorageUserSuite) Test_UserStorage_GetByUsername(t provider.T) {
+func (s *ITUserSuite) Test_UserStorage_GetByUsername(t provider.T) {
 	t.Title("[GetByUsername] Успех")
-	t.Tags("storage", "postgres", "user")
+	t.Tags("integration test", "postgres", "user")
 	t.Parallel()
 	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
 		ctx := context.TODO()
@@ -130,6 +131,7 @@ func (s *StorageUserSuite) Test_UserStorage_GetByUsername(t provider.T) {
 			WithBirthday(time.Date(2002, 3, 3, 0, 0, 0, 0, time.UTC)).
 			WithGender("m").
 			WithFullName("User Third 3").
+			WithRole("admin").
 			Build()
 
 		sCtx.WithNewParameters("ctx", ctx, "model", username)
