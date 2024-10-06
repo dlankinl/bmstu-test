@@ -24,7 +24,7 @@ type ICompanyRepository interface {
 }
 
 type ICompanyService interface {
-	Create(context.Context, *Company) error
+	Create(context.Context, *Company) (*Company, error)
 	GetById(context.Context, uuid.UUID) (*Company, error)
 	GetByOwnerId(context.Context, uuid.UUID, int, bool) ([]*Company, int, error)
 	GetAll(context.Context, int) ([]*Company, error)

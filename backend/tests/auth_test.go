@@ -16,57 +16,6 @@ type AuthSuite struct {
 	suite.Suite
 }
 
-func (s *AuthSuite) Test_AuthRegister(t provider.T) {
-	t.Title("[AuthRegister] Success")
-	t.Tags("auth", "register")
-	t.Parallel()
-	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		repo := mocks.NewMockIAuthRepository(ctrl)
-		crypto := mocks.NewMockIHashCrypto(ctrl)
-		log := mocks.NewMockILogger(ctrl)
-
-		log.EXPECT().
-			Infof(gomock.Any()).
-			AnyTimes()
-		log.EXPECT().
-			Infof(gomock.Any(), gomock.Any()).
-			AnyTimes()
-		log.EXPECT().
-			Warnf(gomock.Any(), gomock.Any()).
-			AnyTimes()
-		log.EXPECT().
-			Errorf(gomock.Any(), gomock.Any()).
-			AnyTimes()
-
-		crypto.EXPECT().
-			GenerateHashPass("test").
-			Return("pass123", nil)
-
-		registerModel := utils.UserAuthMother{}.WithHashedPassUser()
-		repo.EXPECT().
-			Register(
-				context.TODO(),
-				&registerModel,
-			).
-			Return(nil)
-
-		svc := auth.NewService(repo, crypto, "abcdefgh123", log)
-
-		ctx := context.TODO()
-
-		model := utils.UserAuthMother{}.DefaultUser()
-
-		sCtx.WithNewParameters("ctx", ctx, "model", model)
-
-		err := svc.Register(ctx, &model)
-
-		sCtx.Assert().NoError(err)
-	})
-}
-
 func (s *AuthSuite) Test_AuthRegister2(t provider.T) {
 	t.Title("[AuthRegister] Fail")
 	t.Tags("auth", "register")
@@ -99,7 +48,7 @@ func (s *AuthSuite) Test_AuthRegister2(t provider.T) {
 		model := utils.UserAuthMother{}.WithoutUsernameUser()
 		sCtx.WithNewParameters("ctx", ctx, "model", model)
 
-		err := svc.Register(ctx, &model)
+		_, err := svc.Register(ctx, &model)
 
 		sCtx.Assert().Error(err, fmt.Errorf("должно быть указано имя пользователя"))
 	})

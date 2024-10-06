@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"ppo/domain"
 	"ppo/pkg/base"
 	"ppo/pkg/logger"
@@ -29,33 +30,33 @@ func NewService(
 	}
 }
 
-func (s *Service) Register(ctx context.Context, authInfo *domain.UserAuth) (err error) {
+func (s *Service) Register(ctx context.Context, authInfo *domain.UserAuth) (id uuid.UUID, err error) {
 	prompt := "AuthRegister"
 	if authInfo.Username == "" {
 		s.logger.Infof("%s: должно быть указано имя пользователя", prompt)
-		return fmt.Errorf("должно быть указано имя пользователя")
+		return uuid.UUID{}, fmt.Errorf("должно быть указано имя пользователя")
 	}
 
 	if authInfo.Password == "" {
 		s.logger.Infof("%s: должен быть указан пароль", prompt)
-		return fmt.Errorf("должен быть указан пароль")
+		return uuid.UUID{}, fmt.Errorf("должен быть указан пароль")
 	}
 
 	hashedPass, err := s.crypto.GenerateHashPass(authInfo.Password)
 	if err != nil {
 		s.logger.Infof("%s: генерация хэша: %v", prompt, err)
-		return fmt.Errorf("генерация хэша: %w", err)
+		return uuid.UUID{}, fmt.Errorf("генерация хэша: %w", err)
 	}
 
 	authInfo.HashedPass = hashedPass
 
-	err = s.authRepo.Register(ctx, authInfo)
+	id, err = s.authRepo.Register(ctx, authInfo)
 	if err != nil {
 		s.logger.Infof("%s: регистрация пользователя: %v", prompt, err)
-		return fmt.Errorf("регистрация пользователя: %w", err)
+		return uuid.UUID{}, fmt.Errorf("регистрация пользователя: %w", err)
 	}
 
-	return nil
+	return id, nil
 }
 
 func (s *Service) Login(ctx context.Context, authInfo *domain.UserAuth) (token string, err error) {

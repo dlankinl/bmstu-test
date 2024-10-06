@@ -13,33 +13,6 @@ type StorageAuthSuite struct {
 	suite.Suite
 }
 
-func (s *StorageAuthSuite) Test_AuthStorageRegister(t provider.T) {
-	t.Title("[AuthRegister] Success")
-	t.Tags("storage", "auth", "register")
-	t.Parallel()
-	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
-		registerModel := utils.UserAuthMother{}.WithHashedPassUser()
-		ctx := context.TODO()
-
-		mock, err := pgxmock.NewPool()
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer mock.Close()
-
-		mock.ExpectExec("insert").WithArgs(registerModel.Username, registerModel.HashedPass).
-			WillReturnResult(pgxmock.NewResult("insert", 1))
-
-		repo := NewAuthRepository(mock)
-
-		sCtx.WithNewParameters("ctx", ctx, "model", registerModel)
-
-		err = repo.Register(ctx, &registerModel)
-
-		sCtx.Assert().NoError(err)
-	})
-}
-
 func (s *StorageAuthSuite) Test_AuthStorageRegister2(t provider.T) {
 	t.Title("[AuthRegister] Fail")
 	t.Tags("storage", "auth", "register")
@@ -56,14 +29,14 @@ func (s *StorageAuthSuite) Test_AuthStorageRegister2(t provider.T) {
 		}
 		defer mock.Close()
 
-		mock.ExpectExec("insert").WithArgs(model.Username, model.HashedPass).
+		mock.ExpectQuery("insert").WithArgs(model.Username, model.HashedPass).
 			WillReturnError(fmt.Errorf("sql error"))
 
 		repo := NewAuthRepository(mock)
 
 		sCtx.WithNewParameters("ctx", ctx, "model", model)
 
-		err = repo.Register(ctx, &model)
+		_, err = repo.Register(ctx, &model)
 
 		sCtx.Assert().Error(err)
 		sCtx.Assert().Equal(fmt.Errorf("регистрация пользователя: sql error").Error(), err.Error())

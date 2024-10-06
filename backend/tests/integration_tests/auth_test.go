@@ -36,7 +36,7 @@ func (s *ITAuthSuite) Test_AuthStorage_Register(t provider.T) {
 			Build()
 
 		sCtx.WithNewParameters("ctx", ctx, "model", authInfo)
-		err := s.repo.Register(ctx, &authInfo)
+		_, err := s.repo.Register(ctx, &authInfo)
 
 		sCtx.Assert().NoError(err)
 	})
@@ -55,7 +55,7 @@ func (s *ITAuthSuite) Test_AuthStorage_Register2(t provider.T) {
 			Build()
 
 		sCtx.WithNewParameters("ctx", ctx, "model", authInfo)
-		err := s.repo.Register(ctx, &authInfo)
+		_, err := s.repo.Register(ctx, &authInfo)
 
 		sCtx.Assert().Error(err)
 		sCtx.Assert().Equal(fmt.Errorf(`регистрация пользователя: ERROR: duplicate key value violates unique constraint "users_username_key" (SQLSTATE 23505)`).Error(), err.Error())

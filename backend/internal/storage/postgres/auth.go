@@ -18,20 +18,20 @@ func NewAuthRepository(db storage.DBConn) domain.IAuthRepository {
 	}
 }
 
-func (r *AuthRepository) Register(ctx context.Context, authInfo *domain.UserAuth) (err error) {
-	query := `insert into ppo.users (username, password, role) values ($1, $2, 'user')`
+func (r *AuthRepository) Register(ctx context.Context, authInfo *domain.UserAuth) (id uuid.UUID, err error) {
+	query := `insert into ppo.users (username, password, role) values ($1, $2, 'user') returning id`
 
-	_, err = r.db.Exec(
+	err = r.db.QueryRow(
 		ctx,
 		query,
 		authInfo.Username,
 		authInfo.HashedPass,
-	)
+	).Scan(&id)
 	if err != nil {
-		return fmt.Errorf("регистрация пользователя: %w", err)
+		return uuid.UUID{}, fmt.Errorf("регистрация пользователя: %w", err)
 	}
 
-	return nil
+	return id, nil
 }
 
 func (r *AuthRepository) GetByUsername(ctx context.Context, username string) (data *domain.UserAuth, err error) {

@@ -15,11 +15,11 @@ type UserAuth struct {
 
 //go:generate mockgen -source=auth.go -destination=../mocks/auth.go -package=mocks
 type IAuthRepository interface {
-	Register(context.Context, *UserAuth) error
+	Register(context.Context, *UserAuth) (uuid.UUID, error)
 	GetByUsername(context.Context, string) (*UserAuth, error)
 }
 
 type IAuthService interface {
 	Login(context.Context, *UserAuth) (string, error)
-	Register(context.Context, *UserAuth) error
+	Register(context.Context, *UserAuth) (uuid.UUID, error)
 }

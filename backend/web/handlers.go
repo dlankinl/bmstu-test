@@ -92,7 +92,7 @@ func RegisterHandler(app *app.App) http.HandlerFunc {
 		}
 
 		ua := &domain.UserAuth{Username: req.Login, Password: req.Password}
-		err = app.AuthSvc.Register(r.Context(), ua)
+		_, err = app.AuthSvc.Register(r.Context(), ua)
 		if err != nil {
 			app.Logger.Infof("%s: %v", prompt, err)
 			errorResponse(wrappedWriter, fmt.Errorf("%s: %w", prompt, err).Error(), http.StatusBadRequest)
@@ -546,7 +546,7 @@ func CreateCompany(app *app.App) http.HandlerFunc {
 		company := toCompanyModel(&req)
 		company.OwnerID = idUuid
 
-		err = app.CompSvc.Create(r.Context(), &company)
+		_, err = app.CompSvc.Create(r.Context(), &company)
 		if err != nil {
 			app.Logger.Infof("%s: создание компании: %v", prompt, err)
 			errorResponse(wrappedWriter, fmt.Errorf("создание компании: %w", err).Error(), http.StatusBadRequest)

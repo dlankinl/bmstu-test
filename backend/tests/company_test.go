@@ -63,7 +63,7 @@ func (s *CompanySuite) Test_CompanyCreate(t provider.T) {
 
 		sCtx.WithNewParameters("ctx", ctx, "model", model)
 
-		err := svc.Create(ctx, &model)
+		_, err := svc.Create(ctx, &model)
 
 		sCtx.Assert().NoError(err)
 	})
@@ -104,7 +104,7 @@ func (s *CompanySuite) Test_CompanyCreate2(t provider.T) {
 
 		sCtx.WithNewParameters("ctx", ctx, "model", model)
 
-		err := svc.Create(ctx, &model)
+		_, err := svc.Create(ctx, &model)
 
 		sCtx.Assert().Error(err)
 		sCtx.Assert().Equal(fmt.Errorf("должно быть указано название компании").Error(), err.Error())
@@ -152,7 +152,7 @@ func (s *CompanySuite) Test_ClassicCompanyCreate(t provider.T) {
 
 		sCtx.WithNewParameters("ctx", ctx, "model", model)
 
-		err = svc.Create(ctx, &model)
+		_, err = svc.Create(ctx, &model)
 
 		sCtx.Assert().Error(err)
 		sCtx.Assert().Equal(fmt.Errorf("должно быть указано название компании").Error(), err.Error())

@@ -26,32 +26,33 @@ func NewService(
 	}
 }
 
-func (s *Service) Create(ctx context.Context, company *domain.Company) (err error) {
+func (s *Service) Create(ctx context.Context, company *domain.Company) (*domain.Company, error) {
 	prompt := "CompanyCreate"
+	var err error
 
 	if company.Name == "" {
 		s.logger.Infof("%s: должно быть указано название компании", prompt)
-		return fmt.Errorf("должно быть указано название компании")
+		return nil, fmt.Errorf("должно быть указано название компании")
 	}
 
 	if company.City == "" {
 		s.logger.Infof("%s: должно быть указано название города", prompt)
-		return fmt.Errorf("должно быть указано название города")
+		return nil, fmt.Errorf("должно быть указано название города")
 	}
 
 	_, err = s.actFieldRepo.GetById(ctx, company.ActivityFieldId)
 	if err != nil {
 		s.logger.Infof("%s: поиск сферы деятельности: %v", prompt, err)
-		return fmt.Errorf("добавление компании (поиск сферы деятельности): %w", err)
+		return nil, fmt.Errorf("добавление компании (поиск сферы деятельности): %w", err)
 	}
 
 	company, err = s.companyRepo.Create(ctx, company)
 	if err != nil {
 		s.logger.Infof("%s: добавление компании: %v", prompt, err)
-		return fmt.Errorf("добавление компании: %w", err)
+		return nil, fmt.Errorf("добавление компании: %w", err)
 	}
 
-	return nil
+	return company, nil
 }
 
 func (s *Service) GetById(ctx context.Context, id uuid.UUID) (company *domain.Company, err error) {
