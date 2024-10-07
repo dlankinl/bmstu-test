@@ -14,16 +14,16 @@ jobs:
           go-version: '1.22.0'
 
       - name: Run unit tests
-        run: make ci-unit -i
+        run: cd backend && make ci-unit -i
 
       - name: Run integration tests
-        run: make ci-integration -i
+        run: cd backend && make ci-integration -i
 
       - name: Run E2E tests
-        run: make ci-e2e -i
+        run: cd backend && make ci-e2e -i
 
       - name: Processing report data
-        run: make ci-concat-reports
+        run: cd backend && make ci-concat-reports
 
       - name: Load test report history
         uses: actions/checkout@v3
