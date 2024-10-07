@@ -1,0 +1,46 @@
+#stages:
+#  - unit-test
+##  - integration-test
+##  - e2e-test
+#
+#unit_tests:
+#  stage: unit-test
+#  script:
+#    - cd backend && make report
+#
+##integration_tests:
+##  stage: integration-test
+##  script:
+##    - make integration-tests
+##
+##e2e_tests:
+##  stage: e2e-test
+##  script:
+##    - make e2e-tests
+
+
+stages:
+  - unit-test
+  - integration-test
+  - e2e-test
+  - report
+
+unit_tests:
+  stage: unit-test
+  script:
+    - cd backend && make ci-unit
+
+integration_tests:
+  stage: integration-test
+  script:
+    - cd backend && make ci-integration
+
+e2e_tests:
+  stage: e2e-test
+  script:
+    - cd backend && make ci-e2e
+
+report:
+  stage: report
+  script:
+    - cd backend && make ci-concat-reports

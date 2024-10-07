@@ -1,4 +1,6 @@
-package tests
+//go:build unit
+
+package unit
 
 import (
 	"github.com/ozontech/allure-go/pkg/framework/runner"

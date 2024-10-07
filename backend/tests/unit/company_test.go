@@ -1,4 +1,6 @@
-package tests
+//go:build unit
+
+package unit
 
 import (
 	"context"

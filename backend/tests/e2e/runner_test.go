@@ -1,4 +1,6 @@
-package integration_tests
+//go:build e2e
+
+package e2e
 
 import (
 	"github.com/ozontech/allure-go/pkg/framework/runner"

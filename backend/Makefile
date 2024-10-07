@@ -1,9 +1,51 @@
 go-test-command:
 	go test -v ./...
 
+#test:
+#	rm -rf allure-results
+#	export ALLURE_OUTPUT_PATH="/Users/dmitry/Desktop/bmstu/7sem/bmstu-test/backend" && go test ./... --race --parallel 8
+#	cp environment.properties allure-results
+
 test:
 	rm -rf allure-results
-	export ALLURE_OUTPUT_PATH="/Users/dmitry/Desktop/bmstu/7sem/bmstu-test/backend" && go test ./... --race --parallel 8
+	export ALLURE_OUTPUT_PATH="/Users/dmitry/Desktop/bmstu/7sem/bmstu-test/backend" && go test ./internal/storage/postgres --race --parallel 8 && \
+ 		go test ./tests/unit --race --parallel 8 && go test ./tests/integration_tests --race --parallel 8 && go test ./tests/e2e --race --parallel 8
+	cp environment.properties allure-results
+
+unit-tests:
+	rm -rf allure-results
+	export ALLURE_OUTPUT_PATH="/Users/dmitry/Desktop/bmstu/7sem/bmstu-test/backend"
+	go test ./internal/storage/postgres --race --parallel 8 && go test ./tests/unit --race --parallel 8
+
+ci-unit:
+	export ALLURE_OUTPUT_PATH="${CI_BUILDS_DIR}" && \
+ 	export ALLURE_OUTPUT_FOLDER="unit-allure" && \
+ 	go test -tags=unit ./... --race --parallel 8
+
+ci-integration:
+	export ALLURE_OUTPUT_PATH="${CI_BUILDS_DIR}" && \
+	export ALLURE_OUTPUT_FOLDER="integration-allure" && \
+	go test -tags=integration ./... --race --parallel 8
+
+ci-e2e:
+	export ALLURE_OUTPUT_PATH="${CI_BUILDS_DIR}" && \
+	export ALLURE_OUTPUT_FOLDER="e2e-allure" && \
+	go test -tags=e2e ./... --race --parallel 8
+
+ci-concat-reports:
+	mkdir allure-results
+	cp unit-allure/* allure-results/
+	cp integration-allure/* allure-results/
+	cp e2e-allure/* allure-results/
+	cp environment.properties allure-results
+
+integration-tests:
+	export ALLURE_OUTPUT_PATH="/Users/dmitry/Desktop/bmstu/7sem/bmstu-test/backend"
+	go test ./tests/integration_tests --race --parallel 8
+
+e2e-tests:
+	export ALLURE_OUTPUT_PATH="/Users/dmitry/Desktop/bmstu/7sem/bmstu-test/backend"
+	go test ./tests/e2e --race --parallel 8
 	cp environment.properties allure-results
 
 allure:
@@ -13,5 +55,6 @@ allure:
 	allure serve allure-results -p 4000
 
 report: test allure
+#report: unit-tests integration-tests e2e-tests allure
 
 .PHONY: go-test-command test allure report
