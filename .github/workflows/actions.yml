@@ -16,6 +16,9 @@ jobs:
         with:
           go-version: '1.22.0'
 
+  tests:
+    runs-on: ubuntu-latest
+    steps:
       - name: Run unit tests
         run: make ci-unit -i
 
@@ -25,6 +28,9 @@ jobs:
       - name: Run E2E tests
         run: make ci-e2e -i
 
+  report:
+    runs-on: ubuntu-latest
+    steps:
       - name: Processing report data
         run: make ci-concat-reports
 
