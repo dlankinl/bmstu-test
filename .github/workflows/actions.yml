@@ -25,12 +25,6 @@ jobs:
       - name: Run E2E tests
         run: make ci-e2e -i
 
-  report:
-    runs-on: ubuntu-latest
-    needs: tests
-    steps:
-      - uses: actions/checkout@v3
-
       - name: Processing report data
         run: make ci-concat-reports
 
