@@ -55,6 +55,5 @@ allure:
 	allure serve allure-results -p 4000
 
 report: test allure
-#report: unit-tests integration-tests e2e-tests allure
 
 .PHONY: go-test-command test allure report
