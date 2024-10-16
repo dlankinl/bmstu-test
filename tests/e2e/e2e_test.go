@@ -1,4 +1,4 @@
-///go:build e2e
+//go:build e2e
 
 package e2e
 
@@ -189,7 +189,7 @@ func (s *E2ESuite) Test2(t provider.T) {
 			NotEmpty().
 			HasValue("status", "success")
 
-		time.Sleep(time.Second)
+		time.Sleep(time.Millisecond * 200)
 
 		s.e.POST("/login").
 			WithJSON(req).
