@@ -25,7 +25,7 @@ import (
 var tokenAuth *jwtauth.JWTAuth
 var TestDbInstance *pgxpool.Pool
 
-func RunTheApp(db *pgxpool.Pool, done chan os.Signal) {
+func RunTheApp(db *pgxpool.Pool, done chan os.Signal, ok chan struct{}) {
 	cfg, err := config.ReadConfig()
 	if err != nil {
 		log.Fatalln(err)
@@ -147,11 +147,12 @@ func RunTheApp(db *pgxpool.Pool, done chan os.Signal) {
 		serverAddress := fmt.Sprintf("%s:8083", cfg.Server.ServerHost)
 		fmt.Printf("сервер прослушивает адрес: %s\n", serverAddress)
 		logger.Infof("сервер прослушивает адрес: %s\n", serverAddress)
+		ok <- struct{}{}
+		fmt.Println("Len", len(ok))
 		http.ListenAndServe(serverAddress, mux)
 	}()
 
 	<-done
-
 }
 
 func newConn(ctx context.Context, cfg *config.Database) (pool storage.DBConn, err error) {

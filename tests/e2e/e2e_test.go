@@ -11,7 +11,6 @@ import (
 	"os"
 	"ppo/domain"
 	"ppo/mocks"
-	"time"
 )
 
 type E2ESuite struct {
@@ -58,122 +57,21 @@ func (s *E2ESuite) BeforeAll(t provider.T) {
 
 	t.Tags("fixture", "e2e")
 	done := make(chan os.Signal, 1)
-	go RunTheApp(TestDbInstance, done)
+	ok := make(chan struct{}, 2)
+	go RunTheApp(TestDbInstance, done, ok)
+	for {
+		select {
+		case <-ok:
+			return
+		}
+	}
 }
-
-//func (s *E2ESuite) Test(t provider.T) {
-//	t.Title("[e2e] Test")
-//	t.Tags("e2e", "postgres")
-//	t.Parallel()
-//	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
-//		ctx := context.TODO()
-//
-//		s.logger.EXPECT().
-//			Infof(gomock.Any()).
-//			AnyTimes()
-//		s.logger.EXPECT().
-//			Infof(gomock.Any(), gomock.Any()).
-//			AnyTimes()
-//		s.logger.EXPECT().
-//			Warnf(gomock.Any(), gomock.Any()).
-//			AnyTimes()
-//		s.logger.EXPECT().
-//			Errorf(gomock.Any(), gomock.Any()).
-//			AnyTimes()
-//
-//		s.crypto.EXPECT().
-//			CheckPasswordHash("newUserPass", "pass123").
-//			Return(true)
-//
-//		s.crypto.EXPECT().
-//			GenerateHashPass("newUserPass").
-//			Return("pass123", nil)
-//
-//		userAuth := utils.NewUserAuthBuilder().
-//			WithUsername("newUser").
-//			WithPassword("newUserPass").
-//			Build()
-//
-//		loginUserAuth := utils.NewUserAuthBuilder().
-//			WithUsername("newUser").
-//			WithPassword("newUserPass").
-//			WithHashedPass("pass123").
-//			Build()
-//
-//		id, regErr := s.auSvc.Register(ctx, &userAuth)
-//
-//		_, logErr := s.auSvc.Login(ctx, &loginUserAuth)
-//
-//		actFieldId, _ := uuid.Parse("fa406cca-27d6-446e-8cfd-b1a71ed680a0")
-//
-//		company := utils.NewCompanyBuilder().
-//			WithName("newCompany").
-//			WithCity("newCity").
-//			WithOwner(id).
-//			WithActivityField(actFieldId).
-//			Build()
-//
-//		comp, compCreateErr := s.cSvc.Create(ctx, &company)
-//
-//		report := utils.NewFinReportBuilder().
-//			WithQuarter(1).
-//			WithYear(1).
-//			WithCompanyID(comp.ID).
-//			WithCosts(100).
-//			WithRevenue(200).
-//			Build()
-//
-//		reportCreateErr := s.fSvc.Create(ctx, &report)
-//
-//		period := utils.NewPeriodBuilder().
-//			WithStartYear(1).
-//			WithEndYear(1).
-//			WithStartQuarter(1).
-//			WithEndQuarter(1).
-//			Build()
-//
-//		reports, getByCompanyErr := s.fSvc.GetByCompany(ctx, comp.ID, &period)
-//
-//		expectedReports := utils.NewFinReportByPeriodBuilder().
-//			WithReports([]domain.FinancialReport{report}).
-//			WithPeriod(period).
-//			Build()
-//
-//		sCtx.Assert().NoError(regErr)
-//		sCtx.Assert().NoError(logErr)
-//		sCtx.Assert().NoError(compCreateErr)
-//		sCtx.Assert().NoError(reportCreateErr)
-//		sCtx.Assert().NoError(getByCompanyErr)
-//		sCtx.Assert().Equal(&expectedReports, reports)
-//	})
-//}
 
 func (s *E2ESuite) Test2(t provider.T) {
 	t.Title("[e2e] Test2")
 	t.Tags("e2e", "postgres")
 	t.Parallel()
 	t.WithNewStep("Success", func(sCtx provider.StepCtx) {
-		s.logger.EXPECT().
-			Infof(gomock.Any()).
-			AnyTimes()
-		s.logger.EXPECT().
-			Infof(gomock.Any(), gomock.Any()).
-			AnyTimes()
-		s.logger.EXPECT().
-			Warnf(gomock.Any(), gomock.Any()).
-			AnyTimes()
-		s.logger.EXPECT().
-			Errorf(gomock.Any(), gomock.Any()).
-			AnyTimes()
-
-		s.crypto.EXPECT().
-			CheckPasswordHash("newUserPass", "pass123").
-			Return(true)
-
-		s.crypto.EXPECT().
-			GenerateHashPass("newUserPass").
-			Return("pass123", nil)
-
 		type Req struct {
 			Login    string `json:"login"`
 			Password string `json:"password"`
@@ -188,8 +86,6 @@ func (s *E2ESuite) Test2(t provider.T) {
 			Object().
 			NotEmpty().
 			HasValue("status", "success")
-
-		time.Sleep(time.Millisecond * 200)
 
 		s.e.POST("/login").
 			WithJSON(req).
