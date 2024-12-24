@@ -45,7 +45,7 @@ func (s *Service) Create(ctx context.Context, data *domain.ActivityField) (err e
 		return fmt.Errorf("вес сферы деятельности не может быть равен 0")
 	}
 
-	data, err = s.actFieldRepo.Create(ctx, data)
+	_, err = s.actFieldRepo.Create(ctx, data)
 	if err != nil {
 		s.logger.Infof("%s: создание сферы деятельности: %v", prompt, err)
 		return fmt.Errorf("создание сферы деятельности: %w", err)

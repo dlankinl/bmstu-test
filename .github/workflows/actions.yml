@@ -35,7 +35,7 @@ jobs:
 
       - name: Launch golint
         run: |
-          golangci-lint run cmd/... config/... internal/... pkg/...
+          golangci-lint run domain/... internal/... pkg/...
           if [ $? -ne 0 ]; then exit 1; fi
 
   tests:
