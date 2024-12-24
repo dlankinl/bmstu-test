@@ -155,17 +155,10 @@ func UpdateEntrepreneur(app *app.App) http.HandlerFunc {
 			observeRequest(time.Since(start), wrappedWriter.StatusCode(), r.Method, prompt)
 		}()
 
-		id := chi.URLParam(r, "id")
-		if id == "" {
-			app.Logger.Infof("%s: пустой id", prompt)
-			errorResponse(wrappedWriter, fmt.Errorf("%s: пустой id", prompt).Error(), http.StatusBadRequest)
-			return
-		}
-
-		idUuid, err := uuid.Parse(id)
+		idUuid, err := getIDFromPath(r)
 		if err != nil {
-			app.Logger.Infof("%s: преобразование id к uuid: %v", prompt, err)
-			errorResponse(wrappedWriter, fmt.Errorf("%s: преобразование id к uuid: %w", prompt, err).Error(), http.StatusBadRequest)
+			app.Logger.Infof("%s: %v", prompt, err)
+			errorResponse(wrappedWriter, fmt.Errorf("%s: %w", prompt, err).Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -185,24 +178,7 @@ func UpdateEntrepreneur(app *app.App) http.HandlerFunc {
 			return
 		}
 
-		if req.City != "" {
-			userDb.City = req.City
-		}
-		if req.Role != "" {
-			userDb.Role = req.Role
-		}
-		if req.Gender != "" {
-			userDb.Gender = req.Gender
-		}
-		if !req.Birthday.IsZero() {
-			userDb.Birthday = req.Birthday
-		}
-		if req.FullName != "" {
-			userDb.FullName = req.FullName
-		}
-		if req.Username != "" {
-			userDb.Username = req.Username
-		}
+		userDb = fillValuesForUpdateEnt(req)
 
 		err = app.UserSvc.Update(r.Context(), userDb)
 		if err != nil {
@@ -213,6 +189,45 @@ func UpdateEntrepreneur(app *app.App) http.HandlerFunc {
 
 		successResponse(wrappedWriter, http.StatusOK, nil)
 	}
+}
+
+func getIDFromPath(r *http.Request) (uuid.UUID, error) {
+	prompt := "handlers.getIDFromPath"
+
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		return uuid.UUID{}, fmt.Errorf("%s: пустой id", prompt)
+	}
+
+	idUuid, err := uuid.Parse(id)
+	if err != nil {
+		return uuid.UUID{}, fmt.Errorf("%s: преобразование id к uuid: %v", prompt, err)
+	}
+
+	return idUuid, nil
+}
+
+func fillValuesForUpdateEnt(req User) (userDb *domain.User) {
+	if req.City != "" {
+		userDb.City = req.City
+	}
+	if req.Role != "" {
+		userDb.Role = req.Role
+	}
+	if req.Gender != "" {
+		userDb.Gender = req.Gender
+	}
+	if !req.Birthday.IsZero() {
+		userDb.Birthday = req.Birthday
+	}
+	if req.FullName != "" {
+		userDb.FullName = req.FullName
+	}
+	if req.Username != "" {
+		userDb.Username = req.Username
+	}
+
+	return userDb
 }
 
 func DeleteEntrepreneur(app *app.App) http.HandlerFunc {
@@ -645,17 +660,10 @@ func UpdateCompany(app *app.App) http.HandlerFunc {
 			return
 		}
 
-		id := chi.URLParam(r, "id")
-		if id == "" {
-			app.Logger.Infof("%s: пустой id", prompt)
-			errorResponse(wrappedWriter, fmt.Errorf("пустой id").Error(), http.StatusBadRequest)
-			return
-		}
-
-		idUuid, err := uuid.Parse(id)
+		idUuid, err := getIDFromPath(r)
 		if err != nil {
-			app.Logger.Infof("%s: преобразование id к uuid: %v", prompt, err)
-			errorResponse(wrappedWriter, fmt.Errorf("преобразование id к uuid: %w", err).Error(), http.StatusBadRequest)
+			app.Logger.Infof("%s: %w", prompt, err)
+			errorResponse(wrappedWriter, fmt.Errorf("%s: %w", prompt, err).Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -681,15 +689,7 @@ func UpdateCompany(app *app.App) http.HandlerFunc {
 			return
 		}
 
-		if req.ActivityFieldId.ID() != 0 {
-			compDb.ActivityFieldId = req.ActivityFieldId
-		}
-		if req.Name != "" {
-			compDb.Name = req.Name
-		}
-		if req.City != "" {
-			compDb.City = req.City
-		}
+		compDb = fillValuesForUpdateCompany(req)
 
 		err = app.CompSvc.Update(r.Context(), compDb)
 		if err != nil {
@@ -700,6 +700,20 @@ func UpdateCompany(app *app.App) http.HandlerFunc {
 
 		successResponse(wrappedWriter, http.StatusOK, nil)
 	}
+}
+
+func fillValuesForUpdateCompany(req Company) (compDb *domain.Company) {
+	if req.ActivityFieldId.ID() != 0 {
+		compDb.ActivityFieldId = req.ActivityFieldId
+	}
+	if req.Name != "" {
+		compDb.Name = req.Name
+	}
+	if req.City != "" {
+		compDb.City = req.City
+	}
+
+	return compDb
 }
 
 func GetCompany(app *app.App) http.HandlerFunc {
@@ -962,17 +976,10 @@ func UpdateFinReport(app *app.App) http.HandlerFunc {
 			return
 		}
 
-		reportIdStr := chi.URLParam(r, "id")
-		if reportIdStr == "" {
-			app.Logger.Infof("%s: пустой id отчета", prompt)
-			errorResponse(wrappedWriter, fmt.Errorf("пустой id отчета").Error(), http.StatusBadRequest)
-			return
-		}
-
-		reportIdUuid, err := uuid.Parse(reportIdStr)
+		reportIdUuid, err := getIDFromPath(r)
 		if err != nil {
-			app.Logger.Infof("%s: преобразование строки к uuid: %v", prompt, err)
-			errorResponse(wrappedWriter, fmt.Errorf("преобразование строки к uuid: %w", err).Error(), http.StatusInternalServerError)
+			app.Logger.Infof("%s: %w", prompt, err)
+			errorResponse(wrappedWriter, fmt.Errorf("%s: %w", prompt, err).Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -1005,18 +1012,7 @@ func UpdateFinReport(app *app.App) http.HandlerFunc {
 			return
 		}
 
-		if req.Year != 0 {
-			reportDb.Year = req.Year
-		}
-		if req.Quarter != 0 {
-			reportDb.Quarter = req.Quarter
-		}
-		if !(math.Abs(float64(req.Revenue)) < eps) {
-			reportDb.Revenue = req.Revenue
-		}
-		if !(math.Abs(float64(req.Costs)) < eps) {
-			reportDb.Costs = req.Costs
-		}
+		reportDb = fillValuesForUpdateReport(req)
 
 		err = app.FinSvc.Update(r.Context(), reportDb)
 		if err != nil {
@@ -1027,6 +1023,23 @@ func UpdateFinReport(app *app.App) http.HandlerFunc {
 
 		successResponse(wrappedWriter, http.StatusOK, nil)
 	}
+}
+
+func fillValuesForUpdateReport(req FinancialReport) (reportDb *domain.FinancialReport) {
+	if req.Year != 0 {
+		reportDb.Year = req.Year
+	}
+	if req.Quarter != 0 {
+		reportDb.Quarter = req.Quarter
+	}
+	if !(math.Abs(float64(req.Revenue)) < eps) {
+		reportDb.Revenue = req.Revenue
+	}
+	if !(math.Abs(float64(req.Costs)) < eps) {
+		reportDb.Costs = req.Costs
+	}
+
+	return reportDb
 }
 
 func GetFinReport(app *app.App) http.HandlerFunc {
